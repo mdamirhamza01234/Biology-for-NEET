@@ -1,0 +1,1553 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Biology for NEET</title>
+<style>
+  :root {
+    --bg: #0b1220;
+    --bg2: #0f1830;
+    --surface: #131d35;
+    --surface2: #19253f;
+    --line: #243453;
+    --text: #e8eefb;
+    --muted: #8da0c2;
+    --blue: #10b981;
+    --cyan: #2dd4bf;
+    --amber: #fbbf24;
+    --radius: 18px;
+    --nav-h: 68px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Devanagari", Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 50% -10%, #0c4a3a 0%, transparent 60%), var(--bg);
+    background-attachment: fixed;
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: calc(var(--nav-h) + var(--safe-b) + 24px);
+    -webkit-user-select: none; user-select: none;
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ---------- top app bar ---------- */
+  .appbar {
+    position: sticky; top: 0; z-index: 20;
+    padding: calc(var(--safe-t) + 14px) 16px 12px;
+    background: rgba(11, 18, 32, .86);
+    -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line);
+  }
+  .appbar-in { max-width: 1040px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 13px; flex: none;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    box-shadow: 0 6px 18px rgba(16, 185, 129, .35);
+  }
+  .logo svg { width: 22px; height: 22px; stroke: #04112b; stroke-width: 2.2; }
+  .brand h1 { font-size: 18px; font-weight: 700; letter-spacing: .2px; line-height: 1.2; }
+  .brand p { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge {
+    margin-left: auto; flex: none;
+    font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase;
+    color: var(--amber); border: 1px solid rgba(251, 191, 36, .35);
+    background: rgba(251, 191, 36, .08); padding: 6px 10px; border-radius: 999px;
+  }
+
+  main { max-width: 1040px; margin: 0 auto; padding: 18px 16px 0; }
+  .view[hidden] { display: none; }
+  .view { animation: rise .28s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  /* ---------- hero + search ---------- */
+  .hero {
+    border-radius: 22px; padding: 20px;
+    background: linear-gradient(135deg, #047857 0%, #059669 45%, #0d9488 100%);
+    position: relative; overflow: hidden;
+    box-shadow: 0 14px 34px rgba(5, 150, 105, .28);
+  }
+  .hero::after {
+    content: ""; position: absolute; right: -50px; top: -50px; width: 190px; height: 190px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.28), transparent 70%);
+  }
+  .hero small { font-size: 11px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; opacity: .85; }
+  .hero h2 { font-size: 24px; line-height: 1.2; margin: 6px 0 6px; font-weight: 800; }
+  .hero p { font-size: 13.5px; opacity: .9; max-width: 460px; }
+  .hero-stats { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .hero-stats span {
+    background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25);
+    padding: 7px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
+  }
+
+  .search {
+    margin: 16px 0 6px; display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 0 14px; height: 50px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .search:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+  .search svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
+  .search input {
+    flex: 1; min-width: 0; background: none; border: 0; outline: 0; color: var(--text);
+    font: inherit; font-size: 15px; -webkit-user-select: text; user-select: text;
+  }
+  .search input::placeholder { color: #62759a; }
+  .search .clear { width: 28px; height: 28px; border-radius: 50%; display: none; place-items: center; background: var(--surface2); }
+  .search .clear svg { width: 14px; height: 14px; color: var(--text); }
+  .search.has-text .clear { display: grid; }
+
+  .section-label {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 20px 2px 12px; font-size: 13px; color: var(--muted); font-weight: 600; letter-spacing: .8px; text-transform: uppercase;
+  }
+  .section-label b { color: var(--text); font-weight: 600; letter-spacing: 0; text-transform: none; }
+
+  /* ---------- chapter cards (buttons) ---------- */
+  .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 960px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+  .chapter {
+    --c1: hsl(var(--h) 85% 62%); --c2: hsl(calc(var(--h) + 28) 85% 52%);
+    display: flex; align-items: center; gap: 14px; text-align: left; width: 100%;
+    padding: 14px; border-radius: var(--radius);
+    background: linear-gradient(180deg, var(--surface), var(--bg2));
+    border: 1px solid var(--line);
+    position: relative; overflow: hidden;
+    transition: transform .15s ease, border-color .2s, box-shadow .2s, background .2s;
+  }
+  .chapter::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 4px;
+    background: linear-gradient(180deg, var(--c1), var(--c2)); opacity: .9;
+  }
+  .chapter:hover { border-color: hsl(var(--h) 60% 45%); box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+  .chapter:active { transform: scale(.975); background: var(--surface2); }
+  .chapter:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+  .tile {
+    flex: none; width: 52px; height: 52px; border-radius: 15px; display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    box-shadow: 0 8px 18px hsl(var(--h) 80% 40% / .38);
+  }
+  .tile svg { width: 26px; height: 26px; color: #fff; }
+  .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .num { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--c1); }
+  .title { font-size: 16px; font-weight: 700; line-height: 1.25; }
+  .sub { font-size: 12.5px; color: var(--muted); line-height: 1.35; }
+  .go {
+    flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--surface2); border: 1px solid var(--line); color: var(--muted);
+    transition: background .2s, color .2s, transform .2s;
+  }
+  .go svg { width: 18px; height: 18px; }
+  .chapter:hover .go { background: var(--blue); color: #fff; transform: translateX(2px); }
+  .chapter[hidden] { display: none; }
+
+  .empty { display: none; text-align: center; padding: 40px 10px; color: var(--muted); }
+  .empty.show { display: block; }
+  .empty strong { display: block; color: var(--text); font-size: 16px; margin-bottom: 4px; }
+
+  /* ---------- mentor ---------- */
+  .card {
+    border-radius: 24px; padding: 24px 20px; border: 1px solid var(--line);
+    background: linear-gradient(160deg, #162244 0%, #0f1830 60%, #0c1428 100%);
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; width: 260px; height: 260px; border-radius: 50%; right: -90px; top: -90px;
+    background: radial-gradient(circle, rgba(16,185,129,.28), transparent 70%);
+  }
+  .eyebrow { position: relative; text-align: center; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: var(--cyan); }
+  .card h2 { position: relative; text-align: center; font-size: 26px; font-weight: 800; margin: 6px 0 22px; }
+  .mentor { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  @media (min-width: 760px) { .mentor { flex-direction: row; align-items: flex-start; gap: 34px; } }
+  .who { display: flex; flex-direction: column; align-items: center; flex: none; text-align: center; }
+  .ring {
+    width: 190px; height: 190px; border-radius: 50%; padding: 5px;
+    background: conic-gradient(from 200deg, var(--blue), var(--cyan), var(--amber), var(--blue));
+    box-shadow: 0 16px 40px rgba(5, 150, 105, .35);
+  }
+  .ring { overflow: hidden; isolation: isolate; }
+  .ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: center top; border: 4px solid var(--bg); display: block; background: #0f3d33; }
+  .who h3 { margin-top: 16px; font-size: 21px; font-weight: 700; }
+  .who .role { color: var(--amber); font-size: 13px; font-weight: 600; margin: 3px 0 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 280px; }
+  .chips span { font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); }
+  .bio { color: #c6d3ec; font-size: 14.5px; line-height: 1.7; }
+  .bio p { margin-bottom: 12px; }
+  .bio b { color: #fff; font-weight: 600; }
+  .bio .hl { color: var(--amber); font-weight: 600; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+  .stat { text-align: center; padding: 14px 6px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.04); }
+  .stat b { display: block; font-size: 24px; font-weight: 800; color: var(--cyan); }
+  .stat:nth-child(2) b { color: var(--amber); }
+  .stat:nth-child(3) b { color: #fb7185; }
+  .stat span { font-size: 10.5px; letter-spacing: .9px; text-transform: uppercase; color: var(--muted); }
+  .closing { color: #fff; font-weight: 600; margin-top: 14px; }
+
+  /* ---------- contact ---------- */
+  .contact { text-align: center; }
+  .contact p.lead { position: relative; color: var(--muted); font-size: 14px; margin-bottom: 20px; }
+  .handle {
+    position: relative; display: flex; align-items: center; gap: 12px; max-width: 360px; margin: 0 auto;
+    padding: 12px 12px 12px 16px; border-radius: 18px; background: rgba(255,255,255,.06); border: 1px solid var(--line);
+  }
+  .handle .ig {
+    width: 40px; height: 40px; border-radius: 12px; flex: none; display: grid; place-items: center;
+    background: linear-gradient(135deg, #f59e0b, #ef4444 50%, #a855f7);
+  }
+  .handle .ig svg { width: 22px; height: 22px; color: #fff; }
+  .handle .txt { text-align: left; flex: 1; min-width: 0; }
+  .handle .txt small { display: block; font-size: 11px; color: var(--muted); letter-spacing: .6px; text-transform: uppercase; }
+  .handle .txt b { font-size: 16px; -webkit-user-select: text; user-select: text; }
+  .btn {
+    flex: none; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border-radius: 12px;
+    font-weight: 700; font-size: 13.5px; color: #04112b; background: linear-gradient(135deg, var(--cyan), var(--blue));
+    box-shadow: 0 8px 18px rgba(45, 212, 191, .25); transition: transform .12s;
+  }
+  .btn:active { transform: scale(.95); }
+  .btn svg { width: 16px; height: 16px; stroke-width: 2.4; }
+
+  /* ---------- bottom nav ---------- */
+  .nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+    padding: 8px 12px calc(8px + var(--safe-b));
+    background: rgba(11, 18, 32, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border-top: 1px solid var(--line);
+  }
+  .nav-in { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .tab {
+    height: calc(var(--nav-h) - 16px); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    color: var(--muted); font-size: 11.5px; font-weight: 600; transition: background .2s, color .2s, transform .12s;
+  }
+  .tab svg { width: 22px; height: 22px; }
+  .tab:active { transform: scale(.94); }
+  .tab[aria-selected="true"] { color: #fff; background: linear-gradient(135deg, rgba(16,185,129,.9), rgba(13,148,136,.9)); box-shadow: 0 8px 20px rgba(5,150,105,.35); }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--nav-h) + var(--safe-b) + 18px); z-index: 40;
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    background: #1b2a4a; color: #fff; border: 1px solid #2d4373; padding: 11px 18px; border-radius: 14px;
+    font-size: 13.5px; font-weight: 600; max-width: calc(100vw - 32px); text-align: center;
+    box-shadow: 0 14px 30px rgba(0,0,0,.45); transition: opacity .22s, transform .22s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+  /* ---------- Ask AI ---------- */
+  .nav-in { grid-template-columns: repeat(4, 1fr) !important; }
+  .ai-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .ai-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ai-badge { width: 44px; height: 44px; border-radius: 14px; flex: none; display: grid; place-items: center;
+    background: linear-gradient(135deg, #8b5cf6, var(--blue) 55%, var(--cyan)); box-shadow: 0 8px 20px rgba(99,102,241,.35); }
+  .ai-badge svg { width: 24px; height: 24px; stroke: #fff; }
+  .ai-title b { display: block; font-size: 18px; }
+  .ai-title small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ai-title small i { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #64748b; margin-right: 6px; vertical-align: 1px; }
+  .ai-title small.on i { background: #34d399; box-shadow: 0 0 8px #34d399; }
+  .ai-actions { display: flex; gap: 8px; flex: none; }
+  .icon-btn { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); color: var(--text); transition: transform .12s, background .2s; }
+  .icon-btn:active { transform: scale(.92); background: var(--surface2); }
+  .icon-btn svg { width: 20px; height: 20px; }
+  .ai-scope { display: flex; align-items: center; gap: 10px; margin: 14px 0 6px; }
+  .ai-scope span { font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); flex: none; }
+  .select, .field { width: 100%; background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: 13px; padding: 0 12px; height: 44px; font: inherit; font-size: 14.5px; outline: 0; -webkit-user-select: text; user-select: text; }
+  .select:focus, .field:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(16,185,129,.2); }
+  .select option { background: #131d35; color: #e8eefb; }
+  .chat { display: flex; flex-direction: column; gap: 12px; padding: 10px 2px 12px; flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .msg { max-width: 92%; padding: 12px 14px; border-radius: 18px; font-size: 15px; line-height: 1.55; -webkit-user-select: text; user-select: text; word-wrap: break-word; overflow-wrap: anywhere; animation: rise .22s ease both; }
+  .msg.user { align-self: flex-end; background: linear-gradient(135deg, #059669, #0d9488); color: #fff; border-bottom-right-radius: 6px; white-space: pre-wrap; }
+  .msg.ai { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 6px; color: #dbe5f8; }
+  .msg.ai.err { border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.08); }
+  .msg p { margin: 0 0 8px; } .msg p:last-child { margin-bottom: 0; }
+  .msg ul, .msg ol { margin: 4px 0 8px 20px; } .msg li { margin: 2px 0; }
+  .msg b { color: #fff; }
+  .msg code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
+  .msg .h { font-weight: 700; color: #fff; }
+  .mj { font-family: 'Times New Roman', Georgia, serif; font-size: 1.1em; }
+  .mj i { font-style: italic; } .mj .up { font-style: normal; }
+  .mj sup, .mj sub { font-size: .72em; line-height: 0; }
+  .sq { display: inline-flex; align-items: stretch; vertical-align: middle; }
+  .sq > .rd { position: relative; width: .8em; flex: none; } .rd svg, .dg svg { position: absolute; left: 0; top: 0; width: 100%; height: 100%; overflow: visible; }
+  .sq > .ov { padding: 2px .2em 0 .05em; }
+  .dl { display: inline-flex; align-items: stretch; vertical-align: middle; }
+  .dl > .dg { position: relative; width: .5em; flex: none; } .dl > .in { padding: 0 1px; }
+  .dl + sup, .dl + sub { vertical-align: top; line-height: 1; }
+  .dl + sub { vertical-align: bottom; }
+  .mb { display: block; text-align: center; margin: 8px 0; overflow-x: auto; padding: 4px 0; }
+  .fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; font-size: .95em; }
+  .fr > .nu { border-bottom: 1px solid currentColor; padding: 0 4px; } .fr > .de { padding: 0 4px; }
+  .ov { border-top: 1px solid currentColor; padding: 0 1px; }
+  .vc { position: relative; display: inline-block; } .vc::before { content: '\2192'; position: absolute; top: -.62em; left: 0; right: 0; text-align: center; font-size: .7em; font-style: normal; }
+  .meta { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--muted); }
+  .meta span { padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
+  .meta .eng { color: var(--cyan); }
+  .dots { display: inline-flex; gap: 5px; padding: 4px 2px; }
+  .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1s infinite ease-in-out; }
+  .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-5px); opacity: 1; } }
+  .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
+  .suggest button { padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); color: #c9d7f0; text-align: left; transition: transform .12s, border-color .2s; }
+  .suggest button:active { transform: scale(.96); border-color: var(--blue); }
+  .composer { position: static; flex: none; padding: 8px 0 10px; background: none; }
+  .composer-in { max-width: 1040px; margin: 0 auto; display: flex; align-items: flex-end; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 6px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+  .composer-in:focus-within { border-color: var(--blue); }
+  .composer textarea { flex: 1; min-width: 0; resize: none; max-height: 120px; background: none; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 15px; line-height: 1.4; padding: 9px 0; -webkit-user-select: text; user-select: text; }
+  .composer textarea::placeholder { color: #62759a; }
+  .send { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center; background: linear-gradient(135deg, var(--cyan), var(--blue)); transition: transform .12s, opacity .2s; }
+  .send svg { width: 20px; height: 20px; stroke: #04112b; stroke-width: 2.4; }
+  .send:active { transform: scale(.9); } .send:disabled { opacity: .4; }
+
+  /* Ask AI = fixed full-height panel: header, scrolling chat, input. Input can never overlap the messages. */
+  #view-ai:not([hidden]) { position: fixed; left: 0; right: 0; top: var(--bar-h, 84px); bottom: calc(var(--nav-h) + var(--safe-b));
+    z-index: 10; display: flex; flex-direction: column; max-width: 1040px; margin: 0 auto; padding: 12px 16px 0; animation: none; }
+  #view-ai .ai-head, #view-ai .ai-scope { flex: none; }
+  #view-ai .ai-scope { margin: 12px 0 2px; }
+  html.ai-on, html.ai-on body { overflow: hidden; }
+  html.kb .nav { display: none; }
+  html.kb #view-ai:not([hidden]) { bottom: 0; }
+
+  /* ---------- hamburger drawer + home cards ---------- */
+  .brand { min-width: 0; } .brand h1, .brand p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 430px) { .appbar .badge { display: none; } }
+  .menu-btn { width: 42px; height: 42px; border-radius: 13px; flex: none; display: grid; place-items: center; background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+  .menu-btn:active { transform: scale(.92); background: var(--surface2); }
+  .menu-btn svg { width: 22px; height: 22px; }
+  .drawer-bg { position: fixed; inset: 0; z-index: 70; background: rgba(2,6,16,.62); opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+  .drawer-bg.open { opacity: 1; visibility: visible; }
+  .drawer { position: fixed; top: 0; bottom: 0; left: 0; width: min(82vw, 330px); z-index: 71; transform: translateX(-102%); transition: transform .28s cubic-bezier(.2,.8,.2,1);
+    background: linear-gradient(180deg, #111c36, #0b1220 70%); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: calc(var(--safe-t) + 18px) 14px calc(var(--safe-b) + 14px); overflow-y: auto; }
+  .drawer.open { transform: none; box-shadow: 0 0 60px rgba(0,0,0,.6); }
+  .dr-head { display: flex; align-items: center; gap: 12px; padding: 4px 6px 16px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .dr-head .logo { width: 46px; height: 46px; }
+  .dr-head b { display: block; font-size: 17px; } .dr-head small { color: var(--muted); font-size: 12px; }
+  .dr-item { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; padding: 13px 10px; border-radius: 14px; font-size: 15.5px; font-weight: 600; color: var(--text); transition: background .15s; }
+  .dr-item:active { background: var(--surface2); }
+  .dr-item svg { width: 22px; height: 22px; flex: none; color: var(--cyan); }
+  .dr-item .cnt { margin-left: auto; min-width: 26px; text-align: center; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.07); border: 1px solid var(--line); color: var(--muted); }
+  .dr-item small { display: block; font-size: 11.5px; font-weight: 500; color: var(--muted); margin-top: 1px; }
+  .dr-sep { height: 1px; background: var(--line); margin: 8px 6px; }
+  .dr-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 10px 10px 2px; }
+  .dash { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 14px 0 4px; }
+  .dcard.mini { padding: 12px; min-height: 112px; }
+  .dcard.mini .big { top: 10px; right: 11px; font-size: 20px; }
+  .dcard.mini b { font-size: 13px; }
+  .dcard.mini small { font-size: 11px; }
+  .dcard { text-align: left; padding: 14px; border-radius: 18px; border: 1px solid var(--line); background: linear-gradient(160deg, var(--surface), var(--bg2)); position: relative; overflow: hidden; min-height: 104px; display: flex; flex-direction: column; transition: transform .12s; }
+  .dcard:active { transform: scale(.97); }
+  .dcard .ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 9px; }
+  .dcard .ic svg { width: 19px; height: 19px; stroke: #fff; }
+  .dcard b { font-size: 14.5px; line-height: 1.25; } .dcard small { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); line-height: 1.35; }
+  .dcard .big { position: absolute; top: 12px; right: 14px; font-size: 24px; font-weight: 800; color: #fff; }
+  .dcard.recent { grid-column: 1 / -1; min-height: 0; flex-direction: row; align-items: center; gap: 12px; background: linear-gradient(135deg, #065f46, #115e59); border-color: rgba(52,211,153,.35); }
+  .dcard.recent .ic { margin: 0; background: rgba(255,255,255,.16); } .dcard.recent small { color: #bcd3f5; }
+  .dcard.recent .bar { height: 5px; border-radius: 4px; background: rgba(255,255,255,.18); margin-top: 8px; overflow: hidden; } .dcard.recent .bar i { display: block; height: 100%; background: var(--cyan); border-radius: 4px; }
+  .dcard.recent .play { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; } .dcard.recent .play svg { width: 18px; height: 18px; fill: #065f46; stroke: none; }
+
+  .dcard.study { grid-column: 1 / -1; min-height: 0; background: linear-gradient(160deg, #15204a, #0f1830); }
+  .dcard.study .top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .dcard.study .lbl { font-size: 11.5px; letter-spacing: .9px; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+  .dcard.study .num { font-size: 30px; font-weight: 800; line-height: 1.1; margin-top: 4px; } .dcard.study .num small { display: inline; font-size: 14px; color: var(--muted); font-weight: 600; margin-left: 4px; }
+  .dcard.study .streak { font-size: 14px; font-weight: 700; color: var(--amber); white-space: nowrap; padding-top: 14px; }
+  .dcard.study .track { height: 8px; border-radius: 6px; background: rgba(255,255,255,.1); margin: 12px 0 10px; overflow: hidden; }
+  .dcard.study .track i { display: block; height: 100%; width: 0; border-radius: 6px; background: linear-gradient(90deg, var(--cyan), var(--blue)); transition: width .5s; }
+  .dcard.study .week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: end; }
+  .dcard.study .day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .dcard.study .day em { display: block; width: 100%; height: 40px; border-radius: 6px; background: rgba(255,255,255,.07); position: relative; overflow: hidden; }
+  .dcard.study .day em i { position: absolute; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, var(--cyan), var(--blue)); border-radius: 6px; height: 0; }
+  .dcard.study .day span { font-size: 11px; font-weight: 600; color: var(--muted); }
+  .dcard.study .day.today span { color: #fff; }
+  .dcard.study .day.today em { box-shadow: 0 0 0 1.5px rgba(45,212,191,.7); }
+  .fav { margin-left: auto; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; flex: none; color: #5c6f93; }
+  .fav svg { width: 21px; height: 21px; }
+  .fav.on { color: var(--amber); } .fav.on svg { fill: currentColor; }
+  .chapter .fav + .go { margin-left: 0; }
+  .lib-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 12px 6px; border-bottom: 1px solid var(--line); }
+  .lib-row:active { background: var(--surface2); }
+  .lib-row b { display: block; font-size: 14.5px; } .lib-row small { color: var(--muted); font-size: 12px; }
+  .lib-row .pill { margin-left: auto; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(45,212,191,.12); color: var(--cyan); border: 1px solid rgba(45,212,191,.3); white-space: nowrap; }
+  .lib-grp { font-size: 12px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase; color: var(--cyan); margin: 14px 0 2px; }
+  .lib-note { padding: 10px 12px; margin: 6px 0; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--line); font-size: 14px; line-height: 1.45; width: 100%; text-align: left; display: block; }
+  .lib-note i { font-style: normal; font-weight: 700; color: var(--amber); margin-right: 6px; }
+  .lib-empty { padding: 22px 8px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .sheet-bg { position: fixed; inset: 0; z-index: 60; background: rgba(2,6,16,.7); display: flex; align-items: flex-end; justify-content: center; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+  .sheet-bg[hidden] { display: none; }
+  .sheet { width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; background: #101a31; border: 1px solid var(--line); border-radius: 26px 26px 0 0; padding: 20px 18px calc(22px + var(--safe-b)); animation: rise .25s ease both; }
+  .sheet h3 { font-size: 19px; margin-bottom: 4px; }
+  .sheet .hint { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin: 4px 0 12px; }
+  .row { margin: 14px 0 0; } .row label { display: block; font-size: 12px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .pw { display: flex; gap: 8px; }
+  .box { margin-top: 18px; padding: 14px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.03); }
+  .box h4 { font-size: 14px; margin-bottom: 4px; }
+  .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .btn2 { height: 40px; padding: 0 14px; border-radius: 12px; font-weight: 700; font-size: 13.5px; background: var(--surface2); border: 1px solid var(--line); color: var(--text); }
+  .btn2:active { transform: scale(.96); } .btn2:disabled { opacity: .5; }
+  .status { margin-top: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.5; word-break: break-word; }
+  .status.ok { color: #34d399; } .status.bad { color: #fb7185; }
+  .sheet-actions { display: flex; gap: 10px; margin-top: 20px; } .sheet-actions .btn { flex: 1; justify-content: center; }
+  .sheet-actions .ghost { flex: none; background: var(--surface2); color: var(--text); box-shadow: none; border: 1px solid var(--line); }
+
+  /* ---------- launch splash ---------- */
+  html.splash-on, html.splash-on body { overflow: hidden; height: 100%; }
+  #splash { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+    background: radial-gradient(700px 520px at 50% 38%, #0b4a38 0%, #064e3b 38%, #0b1220 100%); transition: opacity .5s ease, visibility .5s; }
+  #splash.out { opacity: 0; visibility: hidden; }
+  #splash .halo { position: absolute; width: 320px; height: 320px; border-radius: 50%; top: calc(50% - 250px);
+    background: radial-gradient(circle, rgba(16,185,129,.55), rgba(45,212,191,.18) 55%, transparent 70%); filter: blur(10px);
+    opacity: 0; animation: halo 2.4s ease-out .15s both; }
+  #splash .ring { position: absolute; width: 214px; height: 214px; border-radius: 52px; top: calc(50% - 215px);
+    border: 2px solid rgba(45,212,191,.55); opacity: 0; animation: ring 1.6s ease-out .55s both; }
+  #splash .icon { position: relative; width: 190px; height: 190px; border-radius: 46px; overflow: hidden; margin-top: -70px;
+    box-shadow: 0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.12), 0 0 50px rgba(16,185,129,.45);
+    opacity: 0; transform: scale(.3) rotate(-14deg); animation: pop .95s cubic-bezier(.2,1.3,.35,1) .1s forwards, float 3s ease-in-out 1.1s infinite; }
+  #splash .icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #splash .icon::after { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,.55) 50%, transparent 65%);
+    transform: translateX(-130%); animation: shine 1s ease-in-out .95s forwards; }
+  #splash h2 { margin-top: 34px; font-size: 27px; font-weight: 800; letter-spacing: .4px; color: #fff; text-align: center; opacity: 0; transform: translateY(14px); animation: up .6s ease .95s forwards; }
+  #splash p { margin-top: 8px; font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #fbbf24; opacity: 0; transform: translateY(10px); animation: up .6s ease 1.15s forwards; }
+  #splash .bar { margin-top: 40px; width: 150px; height: 4px; border-radius: 4px; background: rgba(255,255,255,.14); overflow: hidden; opacity: 0; animation: fade .4s ease 1.2s forwards; }
+  #splash .bar i { display: block; height: 100%; width: 0; border-radius: 4px; background: linear-gradient(90deg, #2dd4bf, #34d399); animation: load 1.5s cubic-bezier(.4,0,.2,1) 1.2s forwards; }
+  @keyframes pop { 0% { opacity: 0; transform: scale(.3) rotate(-14deg); } 60% { opacity: 1; transform: scale(1.08) rotate(2deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @keyframes shine { to { transform: translateX(130%); } }
+  @keyframes up { to { opacity: 1; transform: none; } }
+  @keyframes fade { to { opacity: 1; } }
+  @keyframes load { to { width: 100%; } }
+  @keyframes halo { 0% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; } 100% { opacity: .75; transform: scale(1.15); } }
+  @keyframes ring { 0% { opacity: .9; transform: scale(.8); } 100% { opacity: 0; transform: scale(1.7); } }
+  @media (prefers-reduced-motion: reduce) { #splash .icon, #splash .halo, #splash .ring { animation-duration: .01s; animation-delay: 0s; } #splash .icon::after { display: none; } }
+</style>
+</head>
+<body>
+<div id="splash" aria-hidden="true">
+  <div class="halo"></div><div class="ring"></div>
+  <div class="icon"><img alt="" src="data:image/jpeg;base64,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"></div>
+  <h2>Biology for NEET</h2>
+  <p>11th Biology &bull; NCERT Notes</p>
+  <div class="bar"><i></i></div>
+</div>
+<script>
+(function () {
+  var d = document.documentElement, sp = document.getElementById('splash'), seen = false;
+  try { seen = sessionStorage.getItem('bio_splash') === '1'; sessionStorage.setItem('bio_splash', '1'); } catch (e) {}
+  function done() { if (!sp) return; sp.classList.add('out'); d.classList.remove('splash-on'); var s = sp; sp = null; setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 600); }
+  if (seen) { sp.parentNode.removeChild(sp); sp = null; return; }
+  d.classList.add('splash-on');
+  sp.addEventListener('click', done);
+  setTimeout(done, 2900);
+})();
+</script>
+
+
+<header class="appbar">
+  <div class="appbar-in">
+    <button class="menu-btn" id="menuOpen" type="button" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h12v16H6a2 2 0 00-2 2V5z"/><path d="M8 7h6M8 11h6"/></svg>
+    </div>
+    <div class="brand">
+      <h1>Biology for NEET</h1>
+      <p>11th Biology &bull; NCERT Notes</p>
+    </div>
+    <span class="badge">Offline</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== Chapters ===== -->
+  <section class="view" id="view-chapters" aria-label="Chapters">
+    <div class="hero">
+      <small>Class 11th Biology</small>
+      <h2>Biology for NEET Book PDF</h2>
+      <p>Chapter wise PDFs, ready to read anytime &mdash; no internet needed. Tap a chapter to open it.</p>
+      <div class="hero-stats"><span>19 Chapters</span><span>Works Offline</span></div>
+    </div>
+
+
+    <div class="dash" id="dash">
+      <button class="dcard recent" id="dRecent" type="button">
+        <span class="ic" style="background:rgba(255,255,255,.16)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+        <span style="min-width:0;flex:1"><small style="margin:0;letter-spacing:.8px;text-transform:uppercase;font-weight:700">Recent Read Chapter</small><b id="dRecentT">Abhi koi chapter nahi padha</b><small id="dRecentS">Koi bhi chapter kholo, yahan se continue karo</small><span class="bar"><i id="dRecentBar" style="width:0%"></i></span></span>
+        <span class="play"><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></span>
+      </button>
+      <div class="dcard study" id="dStudy" role="button" tabindex="0" aria-label="Aaj ki padhai - tap to change daily goal">
+        <div class="top"><div><div class="lbl">Aaj ki padhai</div><div class="num"><span id="stMin">0</span><small id="stGoal">/ 60 min</small></div></div><div class="streak" id="stStreak">&#128293; 0 din</div></div>
+        <div class="track"><i id="stBar"></i></div>
+        <div class="week" id="stWeek"></div>
+      </div>
+      <button class="dcard mini" id="dFav" type="button"><span class="ic" style="background:linear-gradient(135deg,#f59e0b,#f97316)"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg></span><span class="big" id="dFavN">0</span><b>Favourites</b><small>Pasandida</small></button>
+      <button class="dcard mini" id="dBm" type="button"><span class="ic" style="background:linear-gradient(135deg,#ec4899,#f43f5e)"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg></span><span class="big" id="dBmN">0</span><b>Bookmarks</b><small>Pages &amp; notes</small></button>
+      <button class="dcard mini" id="dFc" type="button"><span class="ic" style="background:linear-gradient(135deg,#8b5cf6,#6366f1)"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M7 3h14v12"/></svg></span><span class="big" id="dFcN">0</span><b>Flashcards</b><small>Revision cards</small></button>
+    </div>
+
+    <label class="search" id="searchBox">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="Search chapter (e.g. Cell)" aria-label="Search chapters">
+      <button class="clear" id="clearQ" type="button" aria-label="Clear search"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </label>
+
+    <div class="section-label"><span>All Chapters</span><b id="count">19 shown</b></div>
+
+    <div class="grid" id="grid">
+<button class="chapter" type="button" data-n="1" data-search="living world characteristics of life taxonomy nomenclature binomial classification taxonomic categories herbarium museum zoological park" style="--h:140" aria-label="Open The Living World PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-8M12 13c0-4 3-6 7-6 0 4-3 6-7 6zM12 15c0-3-2-5-6-5 0 3 2 5 6 5z"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 01</span>
+          <span class="title">The Living World</span>
+          <span class="sub">Characteristics of Life, Taxonomy &amp; Nomenclature</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="2" data-search="biological classification five kingdom monera protista fungi plantae animalia bacteria archaebacteria viruses viroids lichens mycorrhiza whittaker" style="--h:165" aria-label="Open Biological Classification PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v6M12 9H6v6M12 9h6v6M6 15v4M18 15v4"/><circle cx="12" cy="3" r="1.2"/><circle cx="6" cy="19" r="1.2"/><circle cx="18" cy="19" r="1.2"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 02</span>
+          <span class="title">Biological Classification</span>
+          <span class="sub">Five Kingdoms, Viruses, Viroids &amp; Lichens</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="3" data-search="plant kingdom algae bryophytes pteridophytes gymnosperms angiosperms life cycle alternation of generations chlorophyceae phaeophyceae rhodophyceae" style="--h:120" aria-label="Open Plant Kingdom PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19C5 10 10 5 19 5c0 9-5 14-14 14zM5 19l8-8"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 03</span>
+          <span class="title">Plant Kingdom</span>
+          <span class="sub">Algae, Bryophytes, Pteridophytes, Gymnosperms &amp; Angiosperms</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="4" data-search="animal kingdom porifera cnidaria ctenophora platyhelminthes aschelminthes annelida arthropoda mollusca echinodermata hemichordata chordata symmetry coelom" style="--h:25" aria-label="Open Animal Kingdom PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="10" r="1.8"/><circle cx="10" cy="6" r="1.8"/><circle cx="14" cy="6" r="1.8"/><circle cx="18" cy="10" r="1.8"/><path d="M7 17c0-3 2-5 5-5s5 2 5 5-2 3-5 3-5 0-5-3z"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 04</span>
+          <span class="title">Animal Kingdom</span>
+          <span class="sub">Classification &amp; Phyla of Animals</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="5" data-search="morphology of flowering plants root stem leaf inflorescence flower fruit seed phyllotaxy aestivation placentation floral formula families fabaceae solanaceae liliaceae" style="--h:330" aria-label="Open Morphology of Flowering Plants PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="2"/><circle cx="12" cy="4.5" r="1.8"/><circle cx="16.5" cy="9" r="1.8"/><circle cx="7.5" cy="9" r="1.8"/><circle cx="12" cy="13.5" r="1.8"/><path d="M12 15.5V22"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 05</span>
+          <span class="title">Morphology of Flowering Plants</span>
+          <span class="sub">Root, Stem, Leaf, Inflorescence, Flower, Fruit &amp; Seed</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="6" data-search="anatomy of flowering plants meristematic permanent tissue xylem phloem epidermal ground vascular tissue system secondary growth cambium annual rings heartwood sapwood bark" style="--h:95" aria-label="Open Anatomy of Flowering Plants PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M12 7v10M7 12h10"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 06</span>
+          <span class="title">Anatomy of Flowering Plants</span>
+          <span class="sub">Tissues, Tissue Systems &amp; Secondary Growth</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="7" data-search="structural organisation in animals epithelial connective muscular neural tissue earthworm cockroach frog organ system" style="--h:270" aria-label="Open Structural Organisation in Animals PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5zM3 13l9 5 9-5M3 17.5l9 5 9-5"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 07</span>
+          <span class="title">Structural Organisation in Animals</span>
+          <span class="sub">Animal Tissues, Earthworm, Cockroach &amp; Frog</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="8" data-search="cell the unit of life cell theory prokaryotic eukaryotic cell membrane cell wall nucleus mitochondria chloroplast endoplasmic reticulum golgi ribosome lysosome cytoskeleton" style="--h:205" aria-label="Open Cell: The Unit of Life PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="10" cy="11" r="3"/><circle cx="16" cy="16" r="1.3"/><circle cx="15.5" cy="8" r="1"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 08</span>
+          <span class="title">Cell: The Unit of Life</span>
+          <span class="sub">Cell Theory, Cell Organelles &amp; Structure</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="9" data-search="biomolecules carbohydrates proteins lipids nucleic acids enzymes amino acids monosaccharide polysaccharide metabolism cofactor inhibition michaelis menten" style="--h:15" aria-label="Open Biomolecules PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 4v8l-7 4-7-4V7z"/><path d="M12 11v8M19 7l-7 4-7-4"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 09</span>
+          <span class="title">Biomolecules</span>
+          <span class="sub">Carbohydrates, Proteins, Lipids, Nucleic Acids &amp; Enzymes</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="10" data-search="cell cycle and cell division interphase g1 s g2 mitosis prophase metaphase anaphase telophase cytokinesis meiosis crossing over synapsis" style="--h:345" aria-label="Open Cell Cycle and Cell Division PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="12" r="5"/><circle cx="16" cy="12" r="5"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 10</span>
+          <span class="title">Cell Cycle and Cell Division</span>
+          <span class="sub">Cell Cycle, Mitosis &amp; Meiosis</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="11" data-search="photosynthesis in higher plants light reaction calvin cycle c3 c4 photorespiration chlorophyll photosystem cyclic noncyclic photophosphorylation limiting factors" style="--h:50" aria-label="Open Photosynthesis in Higher Plants PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 11</span>
+          <span class="title">Photosynthesis in Higher Plants</span>
+          <span class="sub">Light Reaction, Calvin Cycle, C3 &amp; C4 Plants</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="12" data-search="respiration in plants glycolysis krebs cycle tca electron transport system oxidative phosphorylation fermentation respiratory quotient anaerobic aerobic atp" style="--h:20" aria-label="Open Respiration in Plants PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 4.5v4h-4M4.6 9a7.5 7.5 0 0113.8-2.6M7.5 19.5v-4h4M19.4 15a7.5 7.5 0 01-13.8 2.6"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 12</span>
+          <span class="title">Respiration in Plants</span>
+          <span class="sub">Glycolysis, Krebs Cycle, ETS &amp; Fermentation</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="13" data-search="plant growth and development growth regulators auxin gibberellin cytokinin ethylene abscisic acid photoperiodism vernalisation phases of growth differentiation dedifferentiation" style="--h:100" aria-label="Open Plant Growth and Development PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9M12 9l-5 5M12 9l5 5M5 4h14"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 13</span>
+          <span class="title">Plant Growth and Development</span>
+          <span class="sub">Growth Regulators, Photoperiodism &amp; Vernalisation</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="14" data-search="breathing and exchange of gases respiratory system lungs diaphragm inspiration expiration tidal volume vital capacity oxygen dissociation curve haemoglobin carbon dioxide transport respiratory disorders asthma emphysema" style="--h:190" aria-label="Open Breathing and Exchange of Gases PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v9M12 13c-1 3-3 4-5 4-2 0-3-2-3-5 0-4 2-7 4-7 1 0 4 0 4 8M12 13c1 3 3 4 5 4 2 0 3-2 3-5 0-4-2-7-4-7-1 0-4 0-4 8"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 14</span>
+          <span class="title">Breathing and Exchange of Gases</span>
+          <span class="sub">Respiratory System &amp; Gas Transport</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="15" data-search="body fluids and circulation blood plasma rbc wbc platelets blood groups rh coagulation lymph heart cardiac cycle ecg double circulation hypertension coronary artery disease" style="--h:355" aria-label="Open Body Fluids and Circulation PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.5 4.5 0 018-2.8A4.5 4.5 0 0120 10c0 5.8-8 11-8 11z"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 15</span>
+          <span class="title">Body Fluids and Circulation</span>
+          <span class="sub">Blood, Lymph, Heart &amp; Circulation</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="16" data-search="excretory products and their elimination kidney nephron urine formation glomerular filtration tubular reabsorption counter current mechanism rem raas dialysis uremia calculi ammonotelism ureotelism uricotelism" style="--h:175" aria-label="Open Excretory Products and their Elimination PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s7 8 7 12.5A7 7 0 015 15.5C5 11 12 3 12 3z"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 16</span>
+          <span class="title">Excretory Products and their Elimination</span>
+          <span class="sub">Kidney, Urine Formation &amp; Osmoregulation</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="17" data-search="locomotion and movement muscle contraction sliding filament theory skeletal system joints actin myosin sarcomere bones myasthenia gravis arthritis osteoporosis gout tetany" style="--h:60" aria-label="Open Locomotion and Movement PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/><path d="M9 9l6 6"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 17</span>
+          <span class="title">Locomotion and Movement</span>
+          <span class="sub">Muscles, Skeleton &amp; Joints</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="18" data-search="neural control and coordination neuron synapse nerve impulse action potential resting potential central nervous system brain forebrain midbrain hindbrain reflex arc sense organs eye ear" style="--h:285" aria-label="Open Neural Control and Coordination PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 9V4M14.6 10.5l4-2.5M14.6 13.5l4 2.5M12 15v5M9.4 13.5l-4 2.5M9.4 10.5l-4-2.5"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 18</span>
+          <span class="title">Neural Control and Coordination</span>
+          <span class="sub">Neuron, Brain, Reflex &amp; Nerve Impulse</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+      <button class="chapter" type="button" data-n="19" data-search="chemical coordination and integration endocrine glands hormones hypothalamus pituitary thyroid parathyroid adrenal pancreas insulin glucagon gonads mechanism of hormone action diabetes goitre" style="--h:310" aria-label="Open Chemical Coordination and Integration PDF">
+        <span class="tile"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 002 3h10a2 2 0 002-3l-5-9V3"/></svg></span>
+        <span class="info">
+          <span class="num">Chapter 19</span>
+          <span class="title">Chemical Coordination and Integration</span>
+          <span class="sub">Endocrine Glands &amp; Hormones</span>
+        </span>
+        <span class="go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></span>
+      </button>
+    </div>
+    <div class="empty" id="empty"><strong>No chapter found</strong>Try a different word.</div>
+  </section>
+
+
+  <!-- ===== Ask AI ===== -->
+  <section class="view" id="view-ai" aria-label="Ask AI" hidden>
+    <div class="ai-head">
+      <div class="ai-title">
+        <div class="ai-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg></div>
+        <div><b>Biology AI</b><small id="aiStatus"><i></i>Not set up</small></div>
+      </div>
+      <div class="ai-actions">
+        <button class="icon-btn" id="aiClear" type="button" aria-label="Clear chat"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg></button>
+        <button class="icon-btn" id="aiSettings" type="button" aria-label="AI settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3h0a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5h0a1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8v0a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+      </div>
+    </div>
+    <div class="ai-scope"><span>Chapter</span>
+      <select class="select" id="aiChapter" aria-label="Limit answers to a chapter"><option value="">All 19 chapters</option><option value="1">Ch 01 &middot; The Living World</option><option value="2">Ch 02 &middot; Biological Classification</option><option value="3">Ch 03 &middot; Plant Kingdom</option><option value="4">Ch 04 &middot; Animal Kingdom</option><option value="5">Ch 05 &middot; Morphology of Flowering Plants</option><option value="6">Ch 06 &middot; Anatomy of Flowering Plants</option><option value="7">Ch 07 &middot; Structural Organisation in Animals</option><option value="8">Ch 08 &middot; Cell: The Unit of Life</option><option value="9">Ch 09 &middot; Biomolecules</option><option value="10">Ch 10 &middot; Cell Cycle and Cell Division</option><option value="11">Ch 11 &middot; Photosynthesis in Higher Plants</option><option value="12">Ch 12 &middot; Respiration in Plants</option><option value="13">Ch 13 &middot; Plant Growth and Development</option><option value="14">Ch 14 &middot; Breathing and Exchange of Gases</option><option value="15">Ch 15 &middot; Body Fluids and Circulation</option><option value="16">Ch 16 &middot; Excretory Products and their Elimination</option><option value="17">Ch 17 &middot; Locomotion and Movement</option><option value="18">Ch 18 &middot; Neural Control and Coordination</option><option value="19">Ch 19 &middot; Chemical Coordination and Integration</option></select>
+    </div>
+    <div class="chat" id="chat" aria-live="polite"></div>
+    <form class="composer" id="composer" autocomplete="off">
+      <div class="composer-in">
+        <textarea id="aiInput" rows="1" placeholder="Apna sawal likho…" aria-label="Your question"></textarea>
+        <button class="send" id="aiSend" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ===== Mentor ===== -->
+  <section class="view" id="view-mentor" aria-label="About the author" hidden>
+    <div class="card">
+      <div class="eyebrow">Meet Your Mentor</div>
+      <h2>About the Author</h2>
+      <div class="bio" style="position:relative;text-align:center">
+        <p>Mentor ki details yahan jald add ki jayengi.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Contact ===== -->
+  <section class="view" id="view-contact" aria-label="Contact us" hidden>
+    <div class="card contact">
+      <div class="eyebrow">Stay Connected</div>
+      <h2>Contact Us</h2>
+      <p class="lead">Contact details jald add ki jayengi.</p>
+      <div class="handle" style="display:none">
+        <div class="txt"><b id="handleText"></b></div>
+        <button class="btn" id="copyBtn" type="button">Copy</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<nav class="nav" aria-label="Main">
+  <div class="nav-in" role="tablist">
+    <button class="tab" role="tab" type="button" data-view="chapters" aria-selected="true">
+      <svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h12v16H6a2 2 0 00-2 2V5z"/><path d="M8 7h6M8 11h6"/></svg>Chapters
+    </button>
+    <button class="tab" role="tab" type="button" data-view="ai" aria-selected="false">
+      <svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/><path d="M19 15l.8 2.2 2.2.8-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>Ask AI
+    </button>
+    <button class="tab" role="tab" type="button" data-view="mentor" aria-selected="false">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.2-6 8-6s6.8 2 8 6"/></svg>Mentor
+    </button>
+    <button class="tab" role="tab" type="button" data-view="contact" aria-selected="false">
+      <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>Contact
+    </button>
+  </div>
+</nav>
+
+
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="AI settings">
+    <h3>AI Settings</h3>
+    <p class="hint">Online mein Gemini use hoga, offline mein phone par chalne wala Gemma. Key sirf is phone mein save hoti hai, kisi file mein nahi.</p>
+    <div class="row"><label for="setMode">Mode</label>
+      <select class="select" id="setMode"><option value="auto">Auto (online &rarr; Gemini, offline &rarr; Gemma)</option><option value="gemini">Only Gemini (online)</option><option value="device">Only on-device Gemma</option></select></div>
+    <div class="row"><label for="setKey">Gemini API key</label>
+      <div class="pw"><input class="field" id="setKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza…">
+      <button class="btn2" id="showKey" type="button">Show</button></div></div>
+    <div class="box">
+      <h4>On-device Gemma 3 1B (offline)</h4>
+      <p class="hint" id="gemmaHint" style="margin:0">Model file (.task, ~528 MB) <b>models/gemma3-1b-it-int4.task</b> mein rakho, ya neeche se file chuno. Phone browser ko WebGPU support chahiye.</p>
+      <div class="btn-row">
+        <button class="btn2" id="loadGemma" type="button">Load from models/ folder</button>
+        <button class="btn2" id="pickGemma" type="button">Choose file&hellip;</button>
+      </div>
+      <input type="file" id="gemmaFile" accept=".task,.bin,.litertlm" hidden>
+      <div class="status" id="gemmaStatus">Not loaded</div>
+    </div>
+    <div class="sheet-actions"><button class="btn ghost" id="sheetClose" type="button">Close</button><button class="btn" id="sheetSave" type="button">Save</button></div>
+  </div>
+</div>
+
+
+<div class="drawer-bg" id="drawerBg"></div>
+<aside class="drawer" id="drawer" aria-label="Menu">
+  <div class="dr-head"><div class="logo"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 012-2h12v16H6a2 2 0 00-2 2V5z"/><path d="M8 7h6M8 11h6"/></svg></div><div><b>Biology for NEET</b><small>11th Biology &bull; NCERT Notes</small></div></div>
+  <button class="dr-item" data-act="home" type="button"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Home</button>
+  <button class="dr-item" data-act="recent" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Recent Read Chapter<small id="drRecentS">Abhi koi nahi</small></span></button>
+  <button class="dr-item" data-act="fav" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>Favourites<span class="cnt" id="drFav">0</span></button>
+  <button class="dr-item" data-act="bm" type="button"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Bookmarks &amp; Notes<span class="cnt" id="drBm">0</span></button>
+  <button class="dr-item" data-act="fc" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="12" rx="2"/><path d="M7 3h14v12"/></svg>Flashcards<span class="cnt" id="drFc">0</span></button>
+  <div class="dr-sep"></div>
+  <button class="dr-item" data-act="ai" type="button"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8L12 3z"/></svg>Ask AI</button>
+  <button class="dr-item" data-act="mentor" type="button"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.2-4 4.2-6 8-6s6.8 2 8 6"/></svg>Meet Your Mentor</button>
+  <button class="dr-item" data-act="contact" type="button"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" style="fill:currentColor"/></svg><span>Contact Us<small>Jald aa raha hai</small></span></button>
+</aside>
+
+<div class="sheet-bg" id="libBg" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Library">
+    <h3 id="libTitle"></h3>
+    <div id="libBody"></div>
+    <div class="sheet-actions"><button class="btn ghost" id="libClose" type="button">Close</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="knowledge.js"></script>
+<script>
+  /* PDF files: put each chapter PDF inside a "pdfs" folder next to this file with exactly these names. */
+  var CHAPTERS = [
+    { n: 1, file: "pdfs/01-the-living-world.pdf" },
+    { n: 2, file: "pdfs/02-biological-classification.pdf" },
+    { n: 3, file: "pdfs/03-plant-kingdom.pdf" },
+    { n: 4, file: "pdfs/04-animal-kingdom.pdf" },
+    { n: 5, file: "pdfs/05-morphology-flowering-plants.pdf" },
+    { n: 6, file: "pdfs/06-anatomy-flowering-plants.pdf" },
+    { n: 7, file: "pdfs/07-structural-organisation-animals.pdf" },
+    { n: 8, file: "pdfs/08-cell-unit-of-life.pdf" },
+    { n: 9, file: "pdfs/09-biomolecules.pdf" },
+    { n: 10, file: "pdfs/10-cell-cycle-cell-division.pdf" },
+    { n: 11, file: "pdfs/11-photosynthesis.pdf" },
+    { n: 12, file: "pdfs/12-respiration-in-plants.pdf" },
+    { n: 13, file: "pdfs/13-plant-growth-development.pdf" },
+    { n: 14, file: "pdfs/14-breathing-exchange-gases.pdf" },
+    { n: 15, file: "pdfs/15-body-fluids-circulation.pdf" },
+    { n: 16, file: "pdfs/16-excretory-products-elimination.pdf" },
+    { n: 17, file: "pdfs/17-locomotion-movement.pdf" },
+    { n: 18, file: "pdfs/18-neural-control-coordination.pdf" },
+    { n: 19, file: "pdfs/19-chemical-coordination-integration.pdf" }
+  ];
+
+  var toastEl = document.getElementById('toast'), toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 2200);
+  }
+  window.__toast = toast; window.__CHAPTERS = CHAPTERS;
+
+  /* chapter buttons */
+  document.getElementById('grid').addEventListener('click', function (e) {
+    var b = e.target.closest('.chapter'); if (!b) return;
+    var n = +b.dataset.n, item = CHAPTERS.filter(function (c) { return c.n === n; })[0];
+    if (!item || !item.file) { toast('This chapter PDF is not added yet'); return; }
+    toast('Opening Chapter ' + (n < 10 ? '0' + n : n) + '…');
+    var ttl = (b.querySelector('.title') || {}).textContent || 'PDF';
+    window.location.href = 'pdf-viewer.html?f=' + encodeURIComponent(item.file) + '&t=' + encodeURIComponent('Ch ' + (n < 10 ? '0' + n : n) + ' \u00b7 ' + ttl);
+  });
+
+  /* search */
+  var q = document.getElementById('q'), box = document.getElementById('searchBox');
+  var cards = [].slice.call(document.querySelectorAll('.chapter'));
+  function filter() {
+    var t = q.value.trim().toLowerCase().replace(/&/g, 'and'), shown = 0;
+    cards.forEach(function (c) {
+      var ok = !t || c.dataset.search.indexOf(t) > -1 || ('chapter ' + c.dataset.n).indexOf(t) > -1;
+      c.hidden = !ok; if (ok) shown++;
+    });
+    box.classList.toggle('has-text', !!t);
+    document.getElementById('count').textContent = shown + ' shown';
+    document.getElementById('empty').classList.toggle('show', shown === 0);
+  }
+  q.addEventListener('input', filter);
+  document.getElementById('clearQ').addEventListener('click', function (e) { e.preventDefault(); q.value = ''; filter(); q.focus(); });
+
+  /* bottom navigation */
+  var tabs = [].slice.call(document.querySelectorAll('.tab'));
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () {
+      tabs.forEach(function (x) { x.setAttribute('aria-selected', x === t ? 'true' : 'false'); });
+      ['chapters', 'ai', 'mentor', 'contact'].forEach(function (v) {
+        document.getElementById('view-' + v).hidden = v !== t.dataset.view;
+      });
+      var onAi = t.dataset.view === 'ai';
+      document.documentElement.classList.toggle('ai-on', onAi);
+      if (!onAi) document.documentElement.classList.remove('kb');
+      window.scrollTo({ top: 0, behavior: 'auto' });
+      if (onAi) { setBar(); var c = document.getElementById('chat'); if (c) c.scrollTop = c.scrollHeight; }
+    });
+  });
+  function setBar() { var a = document.querySelector('.appbar'); if (a) document.documentElement.style.setProperty('--bar-h', a.offsetHeight + 'px'); }
+  setBar(); window.addEventListener('resize', setBar); window.addEventListener('load', setBar);
+  var aiIn = document.getElementById('aiInput'), kbT = null;
+  aiIn.addEventListener('focus', function () { clearTimeout(kbT); document.documentElement.classList.add('kb'); setTimeout(function () { var c = document.getElementById('chat'); c.scrollTop = c.scrollHeight; }, 250); });
+  aiIn.addEventListener('blur', function () { kbT = setTimeout(function () { document.documentElement.classList.remove('kb'); }, 120); });
+
+  /* copy handle */
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    var text = document.getElementById('handleText').textContent;
+    function done() { toast('Copied ' + text); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else fallback();
+    function fallback() {
+      var ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); done(); } catch (err) { toast(text); }
+      document.body.removeChild(ta);
+    }
+  });
+</script>
+
+<script>
+/* ============================ Ask AI ============================ */
+(function () {
+  'use strict';
+  var OUTLINE = window.KB_OUTLINE || [], KB = window.KB || [];
+  var $ = function (id) { return document.getElementById(id); };
+  var chatEl = $('chat'), input = $('aiInput'), sendBtn = $('aiSend'), statusEl = $('aiStatus');
+  var S = { mode: 'auto', key: '' };
+  var history = [];            // {role:'user'|'ai', text, err?}
+  var busy = false, llm = null;
+
+  function load(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var saved = load('bio_ai_settings', {});
+  for (var k in saved) if (saved.hasOwnProperty(k)) S[k] = saved[k];
+  history = load('bio_ai_chat', []);
+
+  /* ---------- retrieval (BM25) ---------- */
+  var STOP = {}; ('the is are was and for with that this from what how why which when your you of in on to a an it as at by be or can do does ka ki ke hai hain kya kaise kyun ko se me mein par aur ya ye wo iska uska batao bataiye samjhao explain').split(' ').forEach(function (w) { STOP[w] = 1; });
+  function stem(w) { return w.length > 4 && /s$/.test(w) ? w.replace(/(ies)$/, 'y').replace(/s$/, '') : w; }
+  function tok(s) { return (String(s).toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(function (w) { return w.length > 1 && !STOP[w]; }).map(stem); }
+  var DOCS = [];
+  OUTLINE.forEach(function (c) {
+    DOCS.push({ ch: c.n, title: c.title, kind: 'outline', text: c.title + '. ' + c.sub + '. Topics: ' + c.topics.join('; ') + '.' });
+  });
+  KB.forEach(function (c) { DOCS.push({ ch: c.ch, title: c.title, kind: 'book', text: c.text }); });
+  var df = {}, avg = 1;
+  DOCS.forEach(function (d) { d.t = tok(d.text); d.tf = {}; d.t.forEach(function (w) { d.tf[w] = (d.tf[w] || 0) + 1; }); Object.keys(d.tf).forEach(function (w) { df[w] = (df[w] || 0) + 1; }); });
+  avg = DOCS.length ? DOCS.reduce(function (a, d) { return a + d.t.length; }, 0) / DOCS.length : 1;
+  function search(q, ch, k) {
+    var qt = tok(q), N = DOCS.length || 1, res = [];
+    DOCS.forEach(function (d) {
+      if (ch && d.ch !== ch) return;
+      var s = 0;
+      qt.forEach(function (w) {
+        var f = d.tf[w]; if (!f) return;
+        var idf = Math.log(1 + (N - df[w] + .5) / (df[w] + .5));
+        s += idf * (f * 2.5) / (f + 1.5 * (.25 + .75 * d.t.length / avg));
+      });
+      if (d.kind === 'book') s *= 1.35;
+      if (s > 0) res.push({ d: d, s: s });
+    });
+    res.sort(function (a, b) { return b.s - a.s; });
+    var out = res.slice(0, k).map(function (r) { return r.d; });
+    if (ch && !out.length) out = DOCS.filter(function (d) { return d.ch === ch; }).slice(0, 1);
+    return out;
+  }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function buildContext(docs, maxChars) {
+    var out = '', i;
+    for (i = 0; i < docs.length; i++) {
+      var piece = '[Chapter ' + pad(docs[i].ch) + ' - ' + docs[i].title + (docs[i].kind === 'outline' ? ' (topic outline)' : '') + ']\n' + docs[i].text + '\n\n';
+      if (out.length + piece.length > maxChars) { if (!out) out = piece.slice(0, maxChars); break; }
+      out += piece;
+    }
+    return out.trim();
+  }
+  var CH_LIST = OUTLINE.map(function (c) { return c.n + ' ' + c.title; }).join(', ');
+  var RULES = 'You are "Biology AI", a friendly Class 11 Biology (NEET) tutor inside the Biology for NEET app. The book has ' + OUTLINE.length + ' chapters: ' + CH_LIST + '.\n' +
+    'Rules:\n- Use the BOOK CONTEXT when it is relevant and mention the chapter it comes from (for example "Chapter 08 - Cell: The Unit of Life").\n' +
+    '- If the context does not cover the question, answer from standard Class 11 NCERT biology and clearly say it is general knowledge, not from the book.\n' +
+    '- Reply in the same language the student uses (Hindi, English or Hinglish). Keep it short and step by step. Give key terms, a tiny example and a NEET exam tip or mnemonic when useful.\n' +
+    '- Write any equation in simple LaTeX inside single dollar signs, e.g. $6CO_2 + 12H_2O \\rightarrow C_6H_{12}O_6 + 6O_2 + 6H_2O$, and put an important equation alone on a line as $$ ... $$. Never write math with curly braces in plain text.\n' +
+    '- Use short bullet points, NCERT terms, and mention NEET-style traps (exceptions, similar-looking terms) when useful. If you are not sure, say so.';
+
+  /* ---------- rendering ---------- */
+  /* ---------- LaTeX -> HTML (offline, tiny) ---------- */
+  var SYM = { alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',theta:'θ',vartheta:'ϑ',lambda:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',omega:'ω',
+    Gamma:'Γ',Delta:'Δ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Psi:'Ψ',Omega:'Ω',
+    cdot:'·',times:'×',div:'÷',pm:'±',mp:'∓',approx:'≈',sim:'∼',simeq:'≃',ll:'≪',gg:'≫',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',equiv:'≡',propto:'∝',infty:'∞',
+    to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',partial:'∂',nabla:'∇',int:'∫',oint:'∮',sum:'∑',prod:'∏',circ:'°',degree:'°',
+    ldots:'…',cdots:'⋯',dots:'…',therefore:'∴',because:'∵',angle:'∠',perp:'⊥',parallel:'∥',in:'∈',hbar:'ħ',ell:'ℓ',prime:'′',
+    sin:'sin',cos:'cos',tan:'tan',cot:'cot',sec:'sec',csc:'csc',log:'log',ln:'ln',exp:'exp',lim:'lim',min:'min',max:'max' };
+  var FUNCS = { sin:1,cos:1,tan:1,cot:1,sec:1,csc:1,cosec:1,log:1,ln:1,exp:1,lim:1,min:1,max:1,sinh:1,cosh:1,tanh:1 };
+  var DP = { '(': 'M8 1Q1 50 8 99', ')': 'M2 1Q9 50 2 99', '[': 'M8 1H2V99H8', ']': 'M2 1H8V99H2', '|': 'M5 1V99', '{': 'M8 1Q4 1 4 10V40Q4 50 1 50Q4 50 4 60V90Q4 99 8 99', '}': 'M2 1Q6 1 6 10V40Q6 50 9 50Q6 50 6 60V90Q6 99 2 99' };
+  function svgP(d) { return '<svg viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.3" vector-effect="non-scaling-stroke"/></svg>'; }
+  var DLM = { sqrt: svgP('M0 62L2.5 56L5 98L10 1') };
+  function dsvg(ch) { return DP[ch] ? svgP(DP[ch]) : (ch === '.' ? '' : ch); }
+  function tex(s) {
+    var i = 0, n = s.length;
+    function delim() { while (s[i] === ' ') i++; var c = s[i++] || ''; if (c === '\\') { var m2 = s.slice(i).match(/^[a-zA-Z]+/); if (m2) { i += m2[0].length; return m2[0] === 'langle' ? '⟨' : m2[0] === 'rangle' ? '⟩' : ''; } c = s[i++] || ''; } return c; }
+    function rawGroup() { if (s[i] !== '{') return s[i] ? s[i++] : ''; var d = 0, st = ++i; for (; i < n; i++) { if (s[i] === '{') d++; else if (s[i] === '}') { if (!d) break; d--; } } var r = s.slice(st, i); i++; return r; }
+    function seq(stop) { var o = ''; while (i < n) { var c = s[i]; if (c === '}') { i++; if (stop) return o; continue; } o += withScripts(); } return o; }
+    function withScripts() {
+      var b = atom();
+      for (;;) {
+        var j = i; while (s[j] === ' ') j++;
+        if (s[j] === '^') { i = j + 1; b += '<sup>' + atom() + '</sup>'; }
+        else if (s[j] === '_') { i = j + 1; b += '<sub>' + atom() + '</sub>'; }
+        else break;
+      }
+      return b;
+    }
+    function atom() {
+      while (s[i] === ' ') i++;
+      if (i >= n) return '';
+      var c = s[i], m, nm;
+      if (c === '{') { i++; return seq(true); }
+      if (c === '\\') {
+        i++; m = s.slice(i).match(/^[a-zA-Z]+/);
+        if (!m) { nm = s[i++] || ''; if (nm === '\\') return '<br>'; if (nm === ',' || nm === ';' || nm === ':') return ' '; if (nm === '!') return ''; return nm; }
+        nm = m[0]; i += nm.length;
+        if (nm === 'frac' || nm === 'dfrac' || nm === 'tfrac') { var a = atom(), d = atom(); return '<span class="fr"><span class="nu">' + a + '</span><span class="de">' + d + '</span></span>'; }
+        if (nm === 'sqrt') { if (s[i] === '[') { var k = s.indexOf(']', i); i = k < 0 ? n : k + 1; } return '<span class="sq"><span class="rd">' + DLM.sqrt + '</span><span class="ov">' + atom() + '</span></span>'; }
+        if (nm === 'text' || nm === 'mathrm' || nm === 'operatorname' || nm === 'textrm') return '<span class="up">' + rawGroup() + '</span>';
+        if (nm === 'mathbf' || nm === 'textbf' || nm === 'boldsymbol') return '<b>' + atom() + '</b>';
+        if (nm === 'vec') return '<span class="vc">' + atom() + '</span>';
+        if (nm === 'hat') return atom() + '\u0302';
+        if (nm === 'bar' || nm === 'overline') return '<span class="ov">' + atom() + '</span>';
+        if (nm === 'dot') return atom() + '\u0307';
+        if (nm === 'left') { var lc = delim(); var inner = ''; while (i < n && s.substr(i, 6) !== '\\right' && s[i] !== '}') inner += withScripts(); var rc = ''; if (s.substr(i, 6) === '\\right') { i += 6; rc = delim(); } return '<span class="dl"><span class="dg">' + dsvg(lc, 0) + '</span><span class="in">' + inner + '</span><span class="dg">' + dsvg(rc, 1) + '</span></span>'; }
+        if (nm === 'right') { delim(); return ''; }
+        if (nm === 'big' || nm === 'Big' || nm === 'bigg' || nm === 'Bigg') return '';
+        if (nm === 'quad' || nm === 'qquad') return '\u2003';
+        if (FUNCS[nm]) return '<span class="up">' + nm + '</span>';
+        return SYM[nm] || nm;
+      }
+      if (/[a-zA-Z]/.test(c)) { m = s.slice(i).match(/^[a-zA-Z]+/)[0]; if (FUNCS[m]) { i += m.length; return '<span class="up">' + m + '</span>'; } i++; return '<i>' + c + '</i>'; }
+      if (c === '&') { m = s.slice(i).match(/^&[a-z]+;/); if (m) { i += m[0].length; return m[0] === '&lt;' ? '&lt;' : m[0] === '&gt;' ? '&gt;' : m[0]; } }
+      if (c === '~') { i++; return ' '; }
+      if (c === "'") { i++; return '′'; }
+      if (c === '-') { i++; return '−'; }
+      i++; return c;
+    }
+    try { return '<span class="mj">' + seq(false) + '</span>'; } catch (e) { return s; }
+  }
+  var MATH_RE = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$([^$\n\s](?:[^$\n]*?[^$\n\s])?)\$/g;
+  function extractMath(t, store) {
+    return t.replace(MATH_RE, function (all, a, b, c, d) {
+      var disp = a != null || b != null, body = a != null ? a : b != null ? b : c != null ? c : d;
+      var h = tex(body.trim()); if (disp) h = '<span class="mb">' + h + '</span>';
+      store.push(h); return '\u0001' + (store.length - 1) + '\u0002';
+    });
+  }
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function inline(s) { return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, '$1<i>$2</i>'); }
+  function md(src) {
+    var store = [], lines = extractMath(esc(String(src).replace(/\r/g, '')), store).split('\n'), out = [], list = null, para = [], m;
+    function flushP() { if (para.length) { out.push('<p>' + inline(para.join('<br>')) + '</p>'); para = []; } }
+    function closeL() { if (list) { out.push('</' + list + '>'); list = null; } }
+    lines.forEach(function (l) {
+      if (!l.trim()) { flushP(); closeL(); return; }
+      if ((m = l.match(/^\s*#{1,4}\s+(.*)/))) { flushP(); closeL(); out.push('<p class="h">' + inline(m[1]) + '</p>'); return; }
+      if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { flushP(); if (list !== 'ul') { closeL(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + inline(m[1]) + '</li>'); return; }
+      if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { flushP(); if (list !== 'ol') { closeL(); out.push('<ol>'); list = 'ol'; } out.push('<li>' + inline(m[1]) + '</li>'); return; }
+      closeL(); para.push(l);
+    });
+    flushP(); closeL();
+    return out.join('').replace(/\u0001(\d+)\u0002/g, function (x, k) { return store[+k]; });
+  }
+  function scrollEnd() { chatEl.scrollTop = chatEl.scrollHeight; }
+  function addMsg(role, text, opts) {
+    opts = opts || {};
+    var el = document.createElement('div');
+    el.className = 'msg ' + role + (opts.err ? ' err' : '');
+    if (role === 'user') el.textContent = text; else el.innerHTML = md(text);
+    chatEl.appendChild(el);
+    return el;
+  }
+  function addMeta(el, engine, docs) {
+    var m = document.createElement('div'); m.className = 'meta';
+    var e = document.createElement('span'); e.className = 'eng'; e.textContent = engine; m.appendChild(e);
+    var seen = {};
+    (docs || []).slice(0, 3).forEach(function (d) {
+      var key = d.ch; if (seen[key]) return; seen[key] = 1;
+      var s = document.createElement('span'); s.textContent = 'Ch ' + pad(d.ch) + ' · ' + d.title; m.appendChild(s);
+    });
+    el.appendChild(m);
+  }
+  function welcome() {
+    var el = addMsg('ai', 'Namaste! Main tumhara **Biology AI** hun. Kisi bhi chapter, topic, concept ya question ke bare mein pucho — main step by step samjhaunga.');
+    var wrap = document.createElement('div'); wrap.className = 'suggest'; wrap.id = 'suggest';
+    ['Cell organelles ke functions', 'Krebs cycle step by step samjhao', 'Mitosis aur Meiosis mein difference', 'Photosynthesis ki light reaction'].forEach(function (t) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = t;
+      b.addEventListener('click', function () { input.value = t; ask(); }); wrap.appendChild(b);
+    });
+    chatEl.appendChild(wrap);
+  }
+  function renderAll() {
+    chatEl.innerHTML = '';
+    if (!history.length) { welcome(); return; }
+    history.forEach(function (m) { var el = addMsg(m.role, m.text, m); if (m.role === 'ai' && m.engine) addMeta(el, m.engine, m.docs); });
+  }
+
+  /* ---------- status ---------- */
+  function updateStatus() {
+    var online = navigator.onLine !== false, txt, on = false;
+    if (S.mode === 'device') { txt = llm ? 'On-device Gemma · ready' : 'On-device Gemma · not loaded'; on = !!llm; }
+    else if (S.mode === 'gemini') { txt = S.key ? (online ? 'Gemini · online' : 'Gemini · no internet') : 'Add your Gemini key in settings'; on = !!S.key && online; }
+    else if (S.key && online) { txt = 'Gemini · online'; on = true; }
+    else if (llm) { txt = 'On-device Gemma · offline'; on = true; }
+    else { txt = S.key ? 'Offline · load Gemma in settings' : 'Not set up · open settings'; }
+    statusEl.innerHTML = '<i></i>'; statusEl.appendChild(document.createTextNode(txt));
+    statusEl.className = on ? 'on' : '';
+  }
+  window.addEventListener('online', updateStatus); window.addEventListener('offline', updateStatus);
+
+  /* ---------- Gemini (online): newest model first, automatic fallback ---------- */
+  var FALLBACK_MODELS = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash-lite'];
+  var VERTEX_MODELS = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-flash-lite', 'gemini-flash-lite-latest'];
+  function isVertexKey() { return /^AQ\./.test(S.key); }
+  var chainMem = null, cool = {};
+  function GErr(status, msg) { this.status = status; this.msg = msg || ''; }
+  function isKeyErr(e) { return e instanceof GErr && (e.status === 401 || e.status === 403 || (e.status === 400 && /api key|API_KEY/i.test(e.msg))); }
+  function friendly(e) {
+    if (e instanceof GErr) {
+      if (isKeyErr(e)) return (e.status === 400 ? 'Gemini API key galat lag rahi hai. Settings mein dobara check karo.' : 'Gemini ne is key ko allow nahi kiya (' + e.status + '). Key sahi hai? Naya key aistudio.google.com/apikey se banao (AIza... se shuru hota hai).') + (e.msg ? '\n\nGoogle ka message: ' + e.msg.slice(0, 220) : '');
+      if (e.status === 429) return 'Gemini ki free limit abhi poori ho gayi hai. Thodi der baad try karo.';
+      if (e.status === 503 || e.status === 500) return 'Gemini abhi busy hai. Thodi der baad try karo.';
+      return 'Gemini se jawab nahi aaya' + (e.status ? ' (' + e.status + ')' : '') + (e.msg ? ': ' + e.msg : '') + '.';
+    }
+    return 'Internet ya Gemini se connect nahi ho paya.';
+  }
+  function modelKind(n) {
+    var m = /^gemini-(\d+(?:\.\d+)?)-flash(-lite)?(-preview[\w.-]*)?$/.exec(n);
+    return m ? { v: parseFloat(m[1]), lite: m[2] ? 1 : 0, pre: m[3] ? 1 : 0 } : null;
+  }
+  async function modelChain() {
+    if (isVertexKey()) return VERTEX_MODELS;
+    if (chainMem && Date.now() - chainMem.t < 6 * 3600e3) return chainMem.list;
+    var list = [], cached = load('bio_ai_models', null);
+    if (cached && cached.list && Date.now() - cached.t < 24 * 3600e3) list = cached.list;
+    else {
+      var res = null;
+      try { res = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=200', { headers: { 'x-goog-api-key': S.key } }); } catch (e) { res = null; }
+      if (res && res.ok) {
+        var j = await res.json(), found = [];
+        (j.models || []).forEach(function (m) {
+          var n = String(m.name || '').replace(/^models\//, ''), k = modelKind(n);
+          if (k && (m.supportedGenerationMethods || []).indexOf('generateContent') > -1) found.push({ n: n, k: k });
+        });
+        found.sort(function (x, y) { return y.k.v - x.k.v || x.k.lite - y.k.lite || x.k.pre - y.k.pre; });
+        list = found.slice(0, 3).map(function (x) { return x.n; });
+        if (list.length) save('bio_ai_models', { t: Date.now(), list: list });
+      } else if (res) {
+        var msg = ''; try { var jj = await res.json(); msg = jj.error && jj.error.message || ''; } catch (e) {}
+        if (res.status === 400 || res.status === 401 || res.status === 403) throw new GErr(res.status, msg);
+      }
+    }
+    var out = []; list.concat(FALLBACK_MODELS).forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+    out = out.slice(0, 6);
+    chainMem = { t: Date.now(), list: out };
+    return out;
+  }
+  function gemParts(j) { var c = j && j.candidates && j.candidates[0], p = c && c.content && c.content.parts || [], t = ''; p.forEach(function (x) { if (x.text && !x.thought) t += x.text; }); return t; }
+  /* New AQ. keys: try Bearer, ?key= and Vertex until Google accepts one (the winner is remembered) */
+  async function postAuth(model, body) {
+    var enc = encodeURIComponent, json = { 'Content-Type': 'application/json' };
+    var gl = 'https://generativelanguage.googleapis.com/v1beta/models/' + enc(model) + ':streamGenerateContent?alt=sse';
+    function req(kind) {
+      if (kind === 'bearer') return [gl, { 'Content-Type': 'application/json', Authorization: 'Bearer ' + S.key }];
+      if (kind === 'query') return [gl + '&key=' + enc(S.key), json];
+      if (kind === 'vertex') return ['https://aiplatform.googleapis.com/v1/publishers/google/models/' + enc(model) + ':streamGenerateContent?alt=sse&key=' + enc(S.key), json];
+      return [gl, { 'Content-Type': 'application/json', 'x-goog-api-key': S.key }];
+    }
+    var aq = isVertexKey(), kinds = aq ? ['bearer', 'query', 'vertex'] : ['header'], mem = load('bio_ai_auth', null);
+    if (aq && mem && kinds.indexOf(mem) > -1) kinds = [mem].concat(kinds.filter(function (k) { return k !== mem; }));
+    var lastRes = null, lastErr = null;
+    for (var i = 0; i < kinds.length; i++) {
+      try {
+        var r = req(kinds[i]), res = await fetch(r[0], { method: 'POST', headers: r[1], body: body });
+        if (res.status === 401 || res.status === 403) { lastRes = res; continue; }
+        if (aq && res.ok) save('bio_ai_auth', kinds[i]);
+        return res;
+      } catch (e) { lastErr = e; }
+    }
+    if (lastRes) return lastRes;
+    throw lastErr;
+  }
+  async function callModel(model, sys, msgs, onText) {
+    var body = JSON.stringify({
+      systemInstruction: { parts: [{ text: sys }] },
+      contents: msgs.map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }; }),
+      generationConfig: { temperature: 0.4, maxOutputTokens: 1400 }
+    });
+    var res = await postAuth(model, body);
+    if (!res.ok) { var msg = ''; try { var j = await res.json(); msg = j.error && j.error.message || ''; } catch (e) {} throw new GErr(res.status, msg); }
+    var full = '';
+    if (!res.body || !res.body.getReader) { var jj = await res.text(); try { JSON.parse(jj).forEach(function (x) { full += gemParts(x); }); } catch (e) {} if (full) onText(full); }
+    else {
+      var reader = res.body.getReader(), dec = new TextDecoder(), buf = '';
+      for (;;) {
+        var r = await reader.read(); if (r.done) break;
+        buf += dec.decode(r.value, { stream: true });
+        var i;
+        while ((i = buf.indexOf('\n')) > -1) {
+          var line = buf.slice(0, i).replace(/\r$/, '').trim(); buf = buf.slice(i + 1);
+          if (line.indexOf('data:') !== 0) continue;
+          var d = line.slice(5).trim(); if (!d || d === '[DONE]') continue;
+          try { var t = gemParts(JSON.parse(d)); if (t) { full += t; onText(full); } } catch (e) {}
+        }
+      }
+    }
+    if (!full) throw new GErr(0, 'Khaali jawab aaya.');
+    return full;
+  }
+  async function askGemini(sys, msgs, onText) {
+    var models = await modelChain(), avail = models.filter(function (m) { return !(cool[m] > Date.now()); }), lastErr = null;
+    if (!avail.length) { cool = {}; avail = models; }
+    for (var i = 0; i < avail.length; i++) {
+      try { return { text: await callModel(avail[i], sys, msgs, onText), model: avail[i] }; }
+      catch (e) {
+        lastErr = e;
+        if (!(e instanceof GErr) || isKeyErr(e)) throw e;          // network or key problem: other models will not help
+        if (e.status === 429 || e.status === 503) cool[avail[i]] = Date.now() + 60000;
+        chainMem = (e.status === 404 || e.status === 400) ? null : chainMem;
+      }                                                              // otherwise: try the next model
+    }
+    throw lastErr || new GErr(0, 'Koi model available nahi.');
+  }
+
+  /* ---------- Gemma on-device (offline) ---------- */
+  var gStatus = $('gemmaStatus');
+  function gSay(t, cls) { gStatus.textContent = t; gStatus.className = 'status' + (cls ? ' ' + cls : ''); }
+  var G = null;
+  try { if (window.Capacitor && window.Capacitor.isPluginAvailable && window.Capacitor.isPluginAvailable('Gemma')) G = window.Capacitor.Plugins.Gemma; } catch (e) { G = null; }
+  async function nativeLoad(pick) {
+    if (pick) {
+      gSay('File copy ho rahi hai… 0%');
+      var h = await G.addListener('progress', function (p) { gSay('Model app mein copy ho raha hai… ' + p.pct + '% (sirf ek baar)'); });
+      try { await G.pickModel(); } finally { h.remove(); }
+    }
+    gSay('Gemma load ho raha hai… (kuch seconds)');
+    await G.load();
+    llm = { native: true };
+    gSay('Gemma ready ✓ (model app mein saved hai, dobara choose karne ki zarurat nahi)', 'ok'); updateStatus();
+  }
+  async function loadGemma(source) {
+    if (G) return nativeLoad(source === 'pick');
+    if (!('gpu' in navigator)) throw new Error('Is browser/WebView mein WebGPU nahi hai, isliye on-device AI nahi chalega.');
+    gSay('Loading engine…');
+    var tries = [['./libs/genai_bundle.mjs', './libs/wasm'], ['https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/genai_bundle.mjs', 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@latest/wasm']];
+    var mod = null, fileset = null;
+    for (var i = 0; i < tries.length && !mod; i++) {
+      try { var m = await import(tries[i][0]); fileset = await m.FilesetResolver.forGenAiTasks(tries[i][1]); mod = m; } catch (e) { mod = null; }
+    }
+    if (!mod) throw new Error('Engine files nahi mili. libs/genai_bundle.mjs aur libs/wasm/ folder jodo (README dekho).');
+    gSay('Loading Gemma model (528 MB) – thoda time lagega…');
+    var base = typeof source === 'string' ? { modelAssetPath: source } : { modelAssetBuffer: source.stream().getReader() };
+    llm = await mod.LlmInference.createFromOptions(fileset, { baseOptions: base, maxTokens: 2048, topK: 40, temperature: 0.5, randomSeed: 101 });
+    gSay('Gemma ready ✓', 'ok'); updateStatus();
+  }
+  var G_RULES = 'You are Biology AI, a Class 11 NCERT Biology (NEET) tutor. Answer in simple English, short and correct. Use only standard NCERT facts; never invent names, numbers or examples. Write any equation inside dollar signs like $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$. Use bullet points starting with "- ". If the answer is not in the context, use your biology knowledge.';
+  var BR = '(?:\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\})';
+  var ATOM = '(?:\\\\[a-zA-Z]+' + BR + '*|[A-Za-z0-9]+(?:[_^](?:' + BR + '|\\w))+|[_^](?:' + BR + '|\\w))';
+  var RUN_RE = new RegExp(ATOM + '(?:[ \\t]?(?:' + ATOM + '|[=+\\-*/()|<>]|(?:[A-Za-z]|\\d+(?:\\.\\d+)?)(?![A-Za-z])))*', 'g');
+  function fixMath(t) {
+    t = String(t || '').replace(/<\/?(?:start|end)_of_turn>/g, '').replace(/^\s*model\s*\n/, '');
+    var parts = [], last = 0, m, re = new RegExp(MATH_RE.source, 'g');
+    while ((m = re.exec(t))) { parts.push([t.slice(last, m.index), 0]); parts.push([m[0], 1]); last = m.index + m[0].length; }
+    parts.push([t.slice(last), 0]);
+    return parts.map(function (p) {
+      if (p[1]) return p[0];
+      return p[0].replace(RUN_RE, function (r) { var tr = r.replace(/\s+$/, ''), sp = r.slice(tr.length); return '$' + tr.replace(/\$/g, '') + '$' + sp; }).replace(/\$\$/g, '$ $');
+    }).join('').replace(/\\\\(?![a-zA-Z])/g, '\n');
+  }
+  async function askGemma(q, ctx, onText) {
+    var prompt = '<start_of_turn>user\n' + G_RULES + '\n\nCONTEXT:\n' + (ctx || '(none)') + '\n\nQuestion: ' + q + '<end_of_turn>\n<start_of_turn>model\n';
+    var full = '';
+    if (llm.native) { var r = await G.generate({ prompt: prompt }); full = fixMath(String(r.text || '').replace(/<end_of_turn>[\s\S]*$/, '').trim()); onText(full); return full; }
+    await llm.generateResponse(prompt, function (part, done) { full += part; onText(fixMath(full.replace(/<end_of_turn>[\s\S]*$/, ''))); });
+    return fixMath(full.replace(/<end_of_turn>[\s\S]*$/, '').trim());
+  }
+
+  /* ---------- main flow ---------- */
+  function pickEngine() {
+    var online = navigator.onLine !== false;
+    if (S.mode === 'device') return llm ? 'device' : 'none';
+    if (S.mode === 'gemini') return S.key ? 'gemini' : 'none';
+    if (S.key && online) return 'gemini';
+    if (llm) return 'device';
+    return S.key ? 'gemini' : 'none';
+  }
+  async function ask() {
+    var q = input.value.trim(); if (!q || busy) return;
+    var sg = $('suggest'); if (sg) sg.remove();
+    input.value = ''; input.style.height = 'auto';
+    var ch = +$('aiChapter').value || 0;
+    history.push({ role: 'user', text: q }); addMsg('user', q);
+    var engine = pickEngine();
+    if (engine === 'none') {
+      var m0 = { role: 'ai', err: true, text: 'AI abhi set up nahi hai. ⚙ Settings mein Gemini API key daalo (online ke liye) ya Gemma model load karo (offline ke liye).' };
+      history.push(m0); addMsg('ai', m0.text, m0); save('bio_ai_chat', history.slice(-40)); scrollEnd(); openSheet(); return;
+    }
+    busy = true; sendBtn.disabled = true;
+    var bubble = addMsg('ai', ''); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; scrollEnd();
+    var docs = search(q, ch, engine === 'gemini' ? 6 : 2);
+    var onText = function (t) { bubble.innerHTML = md(t); scrollEnd(); };
+    var label = '', answer = '', err = null;
+    try {
+      if (engine === 'gemini') {
+        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)');
+        var past = [], hs = history.slice(0, -1);
+        for (var hi = 0; hi + 1 < hs.length; hi++) { if (hs[hi].role === 'user' && hs[hi + 1].role === 'ai' && !hs[hi + 1].err) { past.push(hs[hi], hs[hi + 1]); hi++; } }
+        past = past.slice(-6);
+        while (past.length && past[0].role !== 'user') past.shift();
+        try { var g = await askGemini(sys, past.concat([{ role: 'user', text: q }]), onText); answer = g.text; label = 'Gemini · ' + g.model; }
+        catch (e) {
+          if (S.mode === 'auto' && llm && !isKeyErr(e)) { engine = 'device'; docs = search(q, ch, 2); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; } else throw e;
+        }
+      }
+      if (engine === 'device') { label = 'Gemma · on-device'; answer = await askGemma(q, buildContext(docs, 2400), onText); }
+      bubble.innerHTML = md(answer); addMeta(bubble, label, docs);
+      history.push({ role: 'ai', text: answer, engine: label, docs: docs.slice(0, 3).map(function (d) { return { ch: d.ch, title: d.title }; }) });
+    } catch (e) {
+      err = friendly(e); bubble.className = 'msg ai err'; bubble.innerHTML = md(err);
+      history.push({ role: 'ai', text: err, err: true });
+    }
+    save('bio_ai_chat', history.slice(-40));
+    busy = false; sendBtn.disabled = false; scrollEnd();
+  }
+
+  /* ---------- UI wiring ---------- */
+  $('composer').addEventListener('submit', function (e) { e.preventDefault(); ask(); });
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask(); } });
+  input.addEventListener('input', function () { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 120) + 'px'; });
+  $('aiClear').addEventListener('click', function () { if (busy) return; history = []; save('bio_ai_chat', []); renderAll(); toast('Chat cleared'); });
+
+  var sheet = $('sheet');
+  function openSheet() { $('setMode').value = S.mode; $('setKey').value = S.key; sheet.hidden = false; }
+  function closeSheet() { sheet.hidden = true; }
+  $('aiSettings').addEventListener('click', openSheet);
+  $('sheetClose').addEventListener('click', closeSheet);
+  sheet.addEventListener('click', function (e) { if (e.target === sheet) closeSheet(); });
+  $('showKey').addEventListener('click', function () { var f = $('setKey'), s = f.type === 'password'; f.type = s ? 'text' : 'password'; this.textContent = s ? 'Hide' : 'Show'; });
+  $('sheetSave').addEventListener('click', function () {
+    S.mode = $('setMode').value; S.key = $('setKey').value.replace(/[\s"']/g, ''); delete S.model;
+    save('bio_ai_settings', S); updateStatus(); closeSheet(); toast('Settings saved');
+  });
+  function runLoad(src) {
+    $('loadGemma').disabled = $('pickGemma').disabled = true;
+    loadGemma(src).catch(function (e) { gSay(e && e.message ? e.message : 'Gemma load nahi hua.', 'bad'); }).then(function () { $('loadGemma').disabled = $('pickGemma').disabled = false; });
+  }
+  $('loadGemma').addEventListener('click', function () { runLoad(G ? 'saved' : 'models/gemma3-1b-it-int4.task'); });
+  $('pickGemma').addEventListener('click', function () { if (G) runLoad('pick'); else $('gemmaFile').click(); });
+  $('gemmaFile').addEventListener('change', function () { if (this.files && this.files[0]) runLoad(this.files[0]); });
+
+  if (G) {
+    $('loadGemma').textContent = 'Load saved model';
+    $('gemmaHint').innerHTML = 'Gemma 3 1B <b>.task</b> file (~528 MB) <b>Choose file</b> se ek baar chuno. App use apne andar copy karke hamesha yaad rakhegi, phir offline chalega.';
+    G.status().then(function (st) {
+      if (st && st.hasModel) { gSay('Saved model mila. Load ho raha hai…'); nativeLoad(false).catch(function (e) { gSay(e && e.message ? e.message : 'Gemma load nahi hua.', 'bad'); }); }
+    }).catch(function () {});
+  }
+  renderAll(); updateStatus();
+})();
+</script>
+
+<script>
+/* ============ menu, favourites, library (reads what the PDF viewer saved) ============ */
+(function () {
+  'use strict';
+  var IG = '';
+  var $ = function (id) { return document.getElementById(id); };
+  function lsj(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
+  function lss(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+  function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  var CH = [];
+  [].slice.call(document.querySelectorAll('.chapter')).forEach(function (b) {
+    var n = +b.dataset.n, t = (b.querySelector('.title') || {}).textContent || 'Chapter';
+    var it = (window.__CHAPTERS || []).filter(function (c) { return c.n === n; })[0];
+    CH.push({ n: n, title: t, file: it ? it.file : '', el: b });
+  });
+  function chOf(n) { return CH.filter(function (c) { return c.n === n; })[0]; }
+  function label(c) { return 'Ch ' + pad(c.n) + ' · ' + c.title; }
+  function openCh(c, extra) { window.location.href = 'pdf-viewer.html?f=' + encodeURIComponent(c.file) + '&t=' + encodeURIComponent(label(c)) + (extra || ''); }
+  function show(v) { var t = document.querySelector('.tab[data-view="' + v + '"]'); if (t) t.click(); }
+  function openIG() { if (!IG) { if (window.__toast) window.__toast('Contact details jald add hongi'); return; } try { window.location.href = IG; } catch (e) { window.open(IG, '_blank'); } }
+
+  /* ---- data ---- */
+  function favs() { return lsj('bio_fav', []); }
+  function recents() {
+    var pr = lsj('zl_prog', {}), out = [];
+    CH.forEach(function (c) { var e = pr[c.file]; if (e && e.ts) out.push({ c: c, n: e.n || 1, N: e.N || 0, ts: e.ts }); });
+    out.sort(function (a, b) { return b.ts - a.ts; });
+    return out;
+  }
+  function bmData() {
+    var out = [], total = 0;
+    CH.forEach(function (c) {
+      var fk = encodeURIComponent(c.file), b = lsj('vpair_bm_' + fk, []), nt = lsj('vpair_note_' + fk, []);
+      if (b.length || nt.length) { out.push({ c: c, bm: b, notes: nt }); total += b.length + nt.length; }
+    });
+    return { items: out, total: total };
+  }
+  function fcData() {
+    var out = [], total = 0;
+    CH.forEach(function (c) {
+      var a = lsj('vpair_ann_' + encodeURIComponent(c.file), null), cnt = 0;
+      if (a && a.pages) Object.keys(a.pages).forEach(function (k) { (a.pages[k] || []).forEach(function (s) { if (s.k === 'h') cnt++; }); });
+      if (cnt) { out.push({ c: c, cnt: cnt }); total += cnt; }
+    });
+    return { items: out, total: total };
+  }
+
+
+  /* ---- aaj ki padhai (viewer saves reading time in zl_study) ---- */
+  function dkey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function studyRefresh() {
+    var st = lsj('zl_study', { days: {}, goal: 60 }), days = st.days || {}, goal = st.goal || 60, now = new Date();
+    var today = Math.round((days[dkey(now)] || 0) / 60);
+    $('stMin').textContent = today; $('stGoal').textContent = '/ ' + goal + ' min';
+    $('stBar').style.width = Math.min(100, Math.round(today / goal * 100)) + '%';
+    var streak = 0, d = new Date(now);
+    if (!days[dkey(d)]) d.setDate(d.getDate() - 1);
+    while (days[dkey(d)] > 0 && streak < 400) { streak++; d.setDate(d.getDate() - 1); }
+    $('stStreak').innerHTML = '&#128293; ' + streak + ' din';
+    var mon = new Date(now); mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+    var names = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'], h = '';
+    for (var i = 0; i < 7; i++) {
+      var dd = new Date(mon); dd.setDate(mon.getDate() + i);
+      var m = (days[dkey(dd)] || 0) / 60, pct = Math.min(100, Math.round(m / goal * 100));
+      h += '<div class="day' + (dkey(dd) === dkey(now) ? ' today' : '') + '"><em><i style="height:' + (m > 0 ? Math.max(8, pct) : 0) + '%"></i></em><span>' + names[i] + '</span></div>';
+    }
+    $('stWeek').innerHTML = h;
+  }
+  $('dStudy').addEventListener('click', function () {
+    var st = lsj('zl_study', { days: {}, goal: 60 }), goals = [30, 60, 90, 120, 180], i = goals.indexOf(st.goal || 60);
+    st.days = st.days || {}; st.goal = goals[(i + 1) % goals.length]; lss('zl_study', st); studyRefresh(); toastMsg('Roz ka goal: ' + st.goal + ' min');
+  });
+
+  /* ---- counters + recent card ---- */
+  function refresh() {
+    studyRefresh();
+    var f = favs().length, b = bmData().total, k = fcData().total, r = recents()[0];
+    $('dFavN').textContent = f; $('drFav').textContent = f;
+    $('dBmN').textContent = b; $('drBm').textContent = b;
+    $('dFcN').textContent = k; $('drFc').textContent = k;
+    if (r) {
+      $('dRecentT').textContent = label(r.c);
+      $('dRecentS').textContent = 'Page ' + r.n + (r.N ? ' / ' + r.N : '') + ' · continue karo';
+      $('dRecentBar').style.width = (r.N ? Math.min(100, Math.round(r.n / r.N * 100)) : 0) + '%';
+      $('drRecentS').textContent = label(r.c);
+    } else {
+      $('dRecentT').textContent = 'Abhi koi chapter nahi padha'; $('dRecentS').textContent = 'Koi bhi chapter kholo, yahan se continue karo';
+      $('dRecentBar').style.width = '0%'; $('drRecentS').textContent = 'Abhi koi nahi';
+    }
+    CH.forEach(function (c) { var s = c.el.querySelector('.fav'); if (s) s.classList.toggle('on', favs().indexOf(c.n) > -1); });
+  }
+
+  /* ---- star on every chapter ---- */
+  CH.forEach(function (c) {
+    var s = document.createElement('span'); s.className = 'fav'; s.setAttribute('role', 'button'); s.setAttribute('aria-label', 'Favourite');
+    s.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>';
+    var go = c.el.querySelector('.go'); c.el.insertBefore(s, go);
+  });
+  $('grid').addEventListener('click', function (e) {
+    var s = e.target.closest('.fav'); if (!s) return;
+    e.stopPropagation(); e.preventDefault();
+    var c = CH.filter(function (x) { return x.el === s.closest('.chapter'); })[0], f = favs(), i = f.indexOf(c.n);
+    if (i > -1) f.splice(i, 1); else f.push(c.n);
+    lss('bio_fav', f); refresh();
+    toastMsg(i > -1 ? 'Favourite se hataya' : 'Favourite mein joda gaya');
+  }, true);
+
+  /* ---- library sheet ---- */
+  var libBg = $('libBg');
+  function lib(title, html) { $('libTitle').textContent = title; $('libBody').innerHTML = html; libBg.hidden = false; }
+  function closeLib() { libBg.hidden = true; }
+  $('libClose').addEventListener('click', closeLib);
+  libBg.addEventListener('click', function (e) { if (e.target === libBg) closeLib(); });
+  function rowHtml(i, title, sub, pill) { return '<button class="lib-row" type="button" data-i="' + i + '"><span><b>' + esc(title) + '</b><small>' + esc(sub) + '</small></span>' + (pill ? '<span class="pill">' + esc(pill) + '</span>' : '') + '</button>'; }
+  var current = [];   // click actions for the open sheet
+  function wire() { [].slice.call($('libBody').querySelectorAll('[data-i]')).forEach(function (b) { b.addEventListener('click', function () { var fn = current[+b.dataset.i]; if (fn) fn(); }); }); }
+
+  function showRecent() {
+    var r = recents(); current = [];
+    if (!r.length) { lib('Recent Read Chapter', '<div class="lib-empty">Abhi tak koi chapter nahi padha.<br>Koi bhi chapter kholo, yahan list ban jayegi.</div>'); return; }
+    lib('Recent Read Chapter', r.slice(0, 8).map(function (x, i) { current.push(function () { openCh(x.c); }); return rowHtml(i, label(x.c), 'Page ' + x.n + (x.N ? ' / ' + x.N : ''), x.N ? Math.round(x.n / x.N * 100) + '%' : ''); }).join('')); wire();
+  }
+  function showFav() {
+    var f = favs(); current = [];
+    if (!f.length) { lib('Favourites', '<div class="lib-empty">Abhi koi favourite nahi.<br>Chapter list mein ☆ star dabao.</div>'); return; }
+    lib('Favourites', f.map(function (n, i) { var c = chOf(n); if (!c) return ''; current.push(function () { openCh(c); }); return rowHtml(current.length - 1, label(c), 'Tap karke kholo', '★'); }).join('')); wire();
+  }
+  function showBm() {
+    var d = bmData(); current = [];
+    if (!d.total) { lib('Bookmarks & Notes', '<div class="lib-empty">Abhi koi bookmark ya note nahi.<br>PDF mein ⋮ menu se page bookmark karo ya note likho.</div>'); return; }
+    var h = '';
+    d.items.forEach(function (it) {
+      h += '<div class="lib-grp">' + esc(label(it.c)) + '</div>';
+      it.bm.forEach(function (p) { current.push(function () { openCh(it.c, '&p=' + p); }); h += rowHtml(current.length - 1, 'Bookmark · Page ' + p, 'Is page par jao', ''); });
+      it.notes.slice().sort(function (a, b) { return a.n - b.n; }).forEach(function (nt) { current.push(function () { openCh(it.c, '&p=' + nt.n); }); h += '<button class="lib-note" type="button" data-i="' + (current.length - 1) + '"><i>p. ' + nt.n + '</i>' + esc(nt.text) + '</button>'; });
+    });
+    lib('Bookmarks & Notes', h); wire();
+  }
+  function showFc() {
+    var d = fcData(); current = [];
+    if (!d.total) { lib('Flashcards', '<div class="lib-empty">Abhi koi highlight nahi.<br>PDF mein pencil dabakar highlighter se text par line khicho, phir flashcards ban jayenge.</div>'); return; }
+    lib('Flashcards', d.items.map(function (it) { current.push(function () { openCh(it.c, '&cards=1'); }); return rowHtml(current.length - 1, label(it.c), it.cnt + ' highlight' + (it.cnt > 1 ? 's' : ''), 'Practice'); }).join('')); wire();
+  }
+
+  /* ---- drawer ---- */
+  var dr = $('drawer'), bg = $('drawerBg');
+  function openDr() { refresh(); dr.classList.add('open'); bg.classList.add('open'); }
+  function closeDr() { dr.classList.remove('open'); bg.classList.remove('open'); }
+  $('menuOpen').addEventListener('click', openDr);
+  bg.addEventListener('click', closeDr);
+  var ACT = { home: function () { show('chapters'); window.scrollTo(0, 0); }, recent: showRecent, fav: showFav, bm: showBm, fc: showFc, ai: function () { show('ai'); }, mentor: function () { show('mentor'); }, contact: openIG };
+  [].slice.call(dr.querySelectorAll('[data-act]')).forEach(function (b) { b.addEventListener('click', function () { closeDr(); var f = ACT[b.dataset.act]; if (f) setTimeout(f, 120); }); });
+  $('dRecent').addEventListener('click', function () { var r = recents()[0]; if (r) openCh(r.c); else toastMsg('Pehle koi chapter kholo'); });
+  $('dFav').addEventListener('click', showFav); $('dBm').addEventListener('click', showBm); $('dFc').addEventListener('click', showFc);
+  function toastMsg(m) { if (window.__toast) window.__toast(m); }
+
+  /* Contact tab -> straight to Instagram */
+  document.querySelector('.tab[data-view="contact"]').addEventListener('click', function (e) { e.stopImmediatePropagation(); openIG(); }, true);
+
+  window.addEventListener('pageshow', refresh);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) refresh(); });
+  refresh();
+})();
+</script>
+
+<script>
+/* Android back / side-swipe: ek step peeche (menu, settings, popup, tab) -> sabse end mein exit */
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var dr = $('drawer'), dbg = $('drawerBg'), sheet = $('sheet'), libBg = $('libBg'), home = $('view-chapters');
+  if (!dr || !sheet || !libBg || !home) return;
+  var pushed = 0, skip = 0, tm = null;
+  try { if (history.state && history.state.g) history.replaceState(null, ''); } catch (e) {}
+  function depth() { return (dr.classList.contains('open') ? 1 : 0) + (sheet.hidden ? 0 : 1) + (libBg.hidden ? 0 : 1) + (home.hidden ? 1 : 0); }
+  function sync() {
+    while (pushed < depth()) { try { history.pushState({ g: pushed + 1 }, ''); } catch (e) { break; } pushed++; }
+    clearTimeout(tm);
+    if (pushed > depth()) tm = setTimeout(function () {
+      var n = pushed - depth();
+      if (n > 0) { skip++; pushed -= n; history.go(-n); }
+    }, 250);
+  }
+  /* sabse upar wali cheez band karo; kuch band hua to true, home par ho to false */
+  function closeTop() {
+    if (!libBg.hidden) libBg.hidden = true;
+    else if (!sheet.hidden) sheet.hidden = true;
+    else if (dr.classList.contains('open')) { dr.classList.remove('open'); if (dbg) dbg.classList.remove('open'); }
+    else if (home.hidden) { var t = document.querySelector('.tab[data-view="chapters"]'); if (t) t.click(); }
+    else return false;
+    return true;
+  }
+  window.addEventListener('popstate', function () {
+    if (skip > 0) { skip--; return; }
+    if (pushed > 0) pushed--;
+    closeTop();
+    sync();
+  });
+  /* Android back button / side swipe: ek step peeche, sirf home par app band */
+  try {
+    var CapApp = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (CapApp && CapApp.addListener) {
+      CapApp.addListener('backButton', function () {
+        if (closeTop()) sync();
+        else if (CapApp.exitApp) CapApp.exitApp();
+      });
+    }
+  } catch (e) {}
+  var mo = new MutationObserver(sync);
+  mo.observe(dr, { attributes: true, attributeFilter: ['class'] });
+  [sheet, libBg, home].forEach(function (el) { mo.observe(el, { attributes: true, attributeFilter: ['hidden'] }); });
+})();
+</script>
+
+</body>
+</html>

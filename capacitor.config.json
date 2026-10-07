@@ -1,0 +1,11 @@
+{
+  "appId": "com.neet.biology11",
+  "appName": "Biology for NEET",
+  "webDir": "www",
+  "backgroundColor": "#0b1220",
+  "server": { "androidScheme": "https" },
+  "android": {
+    "backgroundColor": "#0b1220",
+    "adjustMarginsForEdgeToEdge": "auto"
+  }
+}
