@@ -27,6 +27,7 @@ jobs:
         run: |
           mkdir -p www/pdfs www/libs/wasm
           cp index.html pdf-viewer.html knowledge.js www/
+          cp -r pdfjs-wasm www/pdfjs-wasm
           python3 arrange.py
           cp genai_bundle.mjs www/libs/ 2>/dev/null || true
           cp genai_wasm* www/libs/wasm/ 2>/dev/null || true

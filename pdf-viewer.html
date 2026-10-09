@@ -485,7 +485,7 @@ function boot(tries){
     return setTimeout(function(){ boot(tries + 1); }, 100);
   }
   pdfjsLib.GlobalWorkerOptions.workerSrc = window.__pdfWorkerUrl;
-  var task = pdfjsLib.getDocument({ url: file, isEvalSupported: false, disableRange: true });
+  var task = pdfjsLib.getDocument({ url: file, isEvalSupported: false, disableRange: true, wasmUrl: new URL('pdfjs-wasm/', location.href).href });
   task.onProgress = function(p){ if(p && p.total) $('msg').textContent = 'Loading… ' + Math.round(p.loaded / p.total * 100) + '%'; };
   task.promise.then(async function(doc){
     pdf = doc; N = doc.numPages;
