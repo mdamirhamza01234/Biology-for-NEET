@@ -26,7 +26,8 @@ jobs:
       - name: Arrange web files into www/
         run: |
           mkdir -p www/pdfs www/libs/wasm
-          cp index.html pdf-viewer.html knowledge.js www/
+          cp index.html pdf-viewer.html knowledge.js figures.js www/
+          cp -r figs www/figs
           cp -r pdfjs-wasm www/pdfjs-wasm
           python3 arrange.py
           cp genai_bundle.mjs www/libs/ 2>/dev/null || true

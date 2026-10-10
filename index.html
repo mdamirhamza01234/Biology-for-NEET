@@ -305,6 +305,22 @@
   .meta { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--muted); }
   .meta span { padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid var(--line); }
   .meta .eng { color: var(--cyan); }
+
+  .fgc { margin-top: 10px; border: 1px solid var(--line, #cbd5e1); border-radius: 12px; overflow: hidden; background: #fff; color: #0f172a; }
+  .fgc img { display: block; width: 100%; height: auto; background: #fff; cursor: zoom-in; }
+  .fgc .fcap { padding: 8px 10px 4px; font-size: 12.5px; font-weight: 600; line-height: 1.35; }
+  .fgc .fsub { padding: 0 10px; font-size: 11px; color: #64748b; }
+  .fgc .fbt { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 10px 10px; }
+  .fgc .fbt button { border: 1px solid #cbd5e1; background: #f1f5f9; color: #0f172a; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600; }
+  .fgc .ffl { padding: 22px 14px; text-align: center; font-size: 14px; font-weight: 600; background: #eef2ff; cursor: pointer; }
+  .fgc .ffl small { display: block; margin-top: 6px; font-weight: 400; color: #64748b; font-size: 11.5px; }
+  .fov { position: fixed; inset: 0; z-index: 99999; background: rgba(2, 6, 23, .94); display: flex; flex-direction: column; }
+  .fov .fh { display: flex; gap: 8px; align-items: center; padding: 10px 12px; color: #fff; font-size: 13px; }
+  .fov .fh span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fov .fh button, .fov .fh a { background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; padding: 7px 11px; font-size: 12.5px; text-decoration: none; }
+  .fov .fb { flex: 1; overflow: auto; display: flex; align-items: flex-start; justify-content: center; padding: 8px; -webkit-overflow-scrolling: touch; }
+  .fov .fb img { max-width: none; width: 100%; background: #fff; border-radius: 6px; }
+  .fov .fb .ffl { width: 100%; margin: auto; border-radius: 12px; background: #eef2ff; color: #0f172a; padding: 40px 16px; text-align: center; font-weight: 600; font-size: 16px; }
   .dots { display: inline-flex; gap: 5px; padding: 4px 2px; }
   .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1s infinite ease-in-out; }
   .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
@@ -818,6 +834,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="knowledge.js"></script>
+<script src="figures.js"></script>
 <script>
   /* PDF files: put each chapter PDF inside a "pdfs" folder next to this file with exactly these names. */
   var CHAPTERS = [
@@ -1212,7 +1229,7 @@
     opts = opts || {};
     var el = document.createElement('div');
     el.className = 'msg ' + role + (opts.err ? ' err' : '');
-    if (role === 'user') el.textContent = text; else el.innerHTML = md(text, true);
+    if (role === 'user') el.textContent = text; else { var sp = figSplit(text); el.innerHTML = md(sp.text, true); figAttach(el, sp.ids, !!(opts && opts.flash)); }
     chatEl.appendChild(el);
     return el;
   }
@@ -1261,6 +1278,109 @@
   var chainMem = null, cool = {};
   function GErr(status, msg) { this.status = status; this.msg = msg || ''; }
   function isKeyErr(e) { return e instanceof GErr && (e.status === 401 || e.status === 403 || (e.status === 400 && /api key|API_KEY/i.test(e.msg))); }
+
+  /* ---------- figures cropped from the student's own PDFs ---------- */
+  var FIGS = window.FIGS || [], FIG_BY = {}, FIG_DF = {}, FIG_TOK = {};
+  FIGS.forEach(function (f) {
+    FIG_BY[f.id] = f;
+    var a = tok(f.cap + ' ' + f.t), b = tok(f.s || ''), seen = {};
+    FIG_TOK[f.id] = { a: {}, b: {} };
+    a.forEach(function (w) { FIG_TOK[f.id].a[w] = 1; seen[w] = 1; });
+    b.forEach(function (w) { FIG_TOK[f.id].b[w] = 1; seen[w] = 1; });
+    Object.keys(seen).forEach(function (w) { FIG_DF[w] = (FIG_DF[w] || 0) + 1; });
+  });
+  function figSearch(q, ch, k) {
+    if (!FIGS.length) return [];
+    var qt = tok(q), want = {}, res = [], nm = String(q).match(/(\d{1,2}\.\d{1,2})/g) || [];
+    qt.forEach(function (w) { want[w] = 1; });
+    var qs = Object.keys(want);
+    FIGS.forEach(function (f) {
+      var sc = 0, T = FIG_TOK[f.id];
+      qs.forEach(function (w) {
+        var idf = Math.log(1 + FIGS.length / (FIG_DF[w] || 1));
+        if (T.a[w]) sc += idf * 2.5; else if (T.b[w]) sc += idf;
+      });
+      if (f.n && nm.indexOf(f.n) > -1) sc += 40;
+      if (sc > 0 && ch && f.ch === ch) sc *= 1.35;
+      if (sc > 0) res.push({ f: f, sc: sc });
+    });
+    res.sort(function (x, y) { return y.sc - x.sc; });
+    return res.slice(0, k);
+  }
+  function wantsFig(q) { return /diagram|digram|dia?gram|figure|\bfig\b|image|picture|photo|draw|sketch|chitra|tasveer|banao|bana\s*do|dikha|flash\s*-?card|\bcard\b|labell?ed|structure/i.test(q); }
+  function wantsFlash(q) { return /flash\s*-?card|\bcard/i.test(q); }
+  function figPrompt(c) {
+    if (!c.length) return '';
+    var t = '\n\nFIGURES FROM THE STUDENT\'S OWN PDF (real, high quality, cropped from the book):\n';
+    c.forEach(function (x) { t += '- id=' + x.f.id + ' | Ch ' + x.f.ch + ' ' + x.f.t + ' | page ' + x.f.p + ' | ' + (x.f.n ? 'Figure ' + x.f.n + ': ' : '') + String(x.f.cap || x.f.s || '').slice(0, 110).replace(/\s+/g, ' ') + '\n'; });
+    t += 'FIGURE RULE: if the student asks for a diagram, figure, image, labelled picture or flashcard and one of the figures above clearly shows exactly that topic, put [[FIG:id]] (use the exact id, at most 2 markers, each on its own line) at the very START of your reply, then a short explanation. In that case do NOT draw an SVG. If none of them clearly matches, ignore this list, never output a marker, and follow the DIAGRAMS rule instead.';
+    return t;
+  }
+  function figSplit(text, partial) {
+    var ids = [], t = String(text || '').replace(/\[\[FIG:([A-Za-z0-9_.\-]+)\]\]/g, function (m, id) { if (FIG_BY[id] && ids.indexOf(id) < 0) ids.push(id); return ''; });
+    if (partial) t = t.replace(/\[\[F?I?G?:?[A-Za-z0-9_.\-]*\]?\]?$/, '');
+    return { text: t.replace(/^\s+/, ''), ids: ids.slice(0, 2) };
+  }
+  function figEsc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function figTitle(f) { return f.n ? 'Figure ' + f.n + (f.cap ? ' · ' + f.cap : '') : 'Diagram · ' + f.t + ' · page ' + f.p; }
+  function figDeck() { try { return JSON.parse(localStorage.getItem('fig_deck') || '[]').filter(function (i) { return FIG_BY[i]; }); } catch (e) { return []; } }
+  function figDeckSave(a) { try { localStorage.setItem('fig_deck', JSON.stringify(a)); } catch (e) {} }
+  function figOpenPdf(f) {
+    var c = (window.__CHAPTERS || []).filter(function (x) { return x.n === f.ch; })[0]; if (!c) return;
+    window.location.href = 'pdf-viewer.html?f=' + encodeURIComponent(c.file) + '&t=' + encodeURIComponent('Ch ' + (f.ch < 10 ? '0' : '') + f.ch + ' · ' + f.t) + '&p=' + f.p;
+  }
+  function figOverlay(build) {
+    var o = document.createElement('div'); o.className = 'fov';
+    function close() { o.remove(); }
+    build(o, close); document.body.appendChild(o); return o;
+  }
+  function figZoom(f) {
+    figOverlay(function (o, close) {
+      o.innerHTML = '<div class="fh"><span>' + figEsc(figTitle(f)) + '</span><a download="' + figEsc(f.id) + '.jpg" href="' + f.f + '">Save</a><button type="button">Close</button></div><div class="fb"><img alt="" src="' + f.f + '"></div>';
+      o.querySelector('button').onclick = close;
+    });
+  }
+  function figDeckView(start) {
+    var d = figDeck(); if (!d.length) { return; }
+    var i = Math.min(start || 0, d.length - 1), flip = false;
+    figOverlay(function (o, close) {
+      function draw() {
+        var f = FIG_BY[d[i]];
+        o.innerHTML = '<div class="fh"><span>Fig cards ' + (i + 1) + '/' + d.length + '</span><button type="button" data-a="prev">‹</button><button type="button" data-a="next">›</button><button type="button" data-a="del">Remove</button><button type="button" data-a="x">Close</button></div><div class="fb">' +
+          (flip ? '<img alt="" src="' + f.f + '" data-a="flip">' : '<div class="ffl" data-a="flip">' + figEsc(figTitle(f)) + '<small>Pehle yaad karo / draw karo, phir tap karke dekho</small></div>') + '</div>';
+      }
+      o.onclick = function (e) {
+        var a = e.target.getAttribute && e.target.getAttribute('data-a'); if (!a) return;
+        if (a === 'x') close(); else if (a === 'flip') { flip = !flip; draw(); }
+        else if (a === 'next') { i = (i + 1) % d.length; flip = false; draw(); }
+        else if (a === 'prev') { i = (i - 1 + d.length) % d.length; flip = false; draw(); }
+        else if (a === 'del') { d.splice(i, 1); figDeckSave(d); if (!d.length) { close(); return; } i = Math.min(i, d.length - 1); flip = false; draw(); }
+      };
+      draw();
+    });
+  }
+  function figCard(f, flash) {
+    var el = document.createElement('div'); el.className = 'fgc';
+    var inDeck = figDeck().indexOf(f.id) > -1;
+    el.innerHTML = (flash ? '<div class="ffl" data-a="flip">' + figEsc(figTitle(f)) + '<small>Pehle yaad karo, phir tap karke diagram dekho</small></div>' : '<img alt="' + figEsc(figTitle(f)) + '" loading="lazy" src="' + f.f + '" data-a="zoom"><div class="fcap">' + figEsc(figTitle(f)) + '</div>') +
+      '<div class="fsub">Ch ' + f.ch + ' · ' + figEsc(f.t) + ' · PDF page ' + f.p + ' · tumhare PDF se</div>' +
+      '<div class="fbt"><button type="button" data-a="pdf">Open in PDF</button><button type="button" data-a="deck">' + (inDeck ? '✓ In flashcards' : '＋ Flashcard') + '</button><button type="button" data-a="decks">My cards (' + figDeck().length + ')</button></div>';
+    el.addEventListener('click', function (e) {
+      var a = e.target.getAttribute && e.target.getAttribute('data-a'); if (!a) return;
+      if (a === 'zoom') figZoom(f);
+      else if (a === 'flip') {
+        var h = el.querySelector('.ffl'); var im = document.createElement('img'); im.src = f.f; im.alt = ''; im.setAttribute('data-a', 'zoom'); h.replaceWith(im);
+      }
+      else if (a === 'pdf') figOpenPdf(f);
+      else if (a === 'deck') { var d = figDeck(), k = d.indexOf(f.id); if (k > -1) d.splice(k, 1); else d.push(f.id); figDeckSave(d); e.target.textContent = k > -1 ? '＋ Flashcard' : '✓ In flashcards'; var bd = el.querySelector('[data-a=decks]'); if (bd) bd.textContent = 'My cards (' + d.length + ')'; }
+      else if (a === 'decks') { var dd = figDeck(); if (dd.length) figDeckView(Math.max(0, dd.indexOf(f.id))); }
+    });
+    return el;
+  }
+  function figAttach(el, ids, flash) {
+    (ids || []).forEach(function (id) { if (FIG_BY[id]) el.appendChild(figCard(FIG_BY[id], flash)); });
+  }
+
   function friendly(e) {
     if (e instanceof GErr) {
       if (isKeyErr(e)) return (e.status === 400 ? 'Gemini API key galat lag rahi hai. Settings mein dobara check karo.' : 'Gemini ne is key ko allow nahi kiya (' + e.status + '). Key sahi hai? Naya key aistudio.google.com/apikey se banao (AIza... se shuru hota hai).') + (e.msg ? '\n\nGoogle ka message: ' + e.msg.slice(0, 220) : '');
@@ -1455,11 +1575,12 @@
     busy = true; sendBtn.disabled = true;
     var bubble = addMsg('ai', ''); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; scrollEnd();
     var docs = search(q, ch, engine === 'gemini' ? 6 : 2);
-    var onText = function (t) { bubble.innerHTML = md(t); scrollEnd(); };
+    var onText = function (t) { bubble.innerHTML = md(figSplit(t, true).text); scrollEnd(); };
+    var fcand = figSearch(q, ch, 8), gfig = [];
     var label = '', answer = '', err = null;
     try {
       if (engine === 'gemini') {
-        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)');
+        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)') + figPrompt(fcand);
         var past = [], hs = history.slice(0, -1);
         for (var hi = 0; hi + 1 < hs.length; hi++) { if (hs[hi].role === 'user' && hs[hi + 1].role === 'ai' && !hs[hi + 1].err) { past.push(hs[hi], hs[hi + 1]); hi++; } }
         past = past.slice(-6);
@@ -1470,7 +1591,8 @@
         }
       }
       if (engine === 'device') { label = 'Gemma · on-device'; answer = await askGemma(q, buildContext(docs, 2400), onText); }
-      bubble.innerHTML = md(answer, true); addMeta(bubble, label, docs);
+      if (engine === 'device' && wantsFig(q) && fcand.length && fcand[0].sc >= 6) answer += '\n[[FIG:' + fcand[0].f.id + ']]';
+      var fsp = figSplit(answer); bubble.innerHTML = md(fsp.text, true); figAttach(bubble, fsp.ids, wantsFlash(q)); addMeta(bubble, label, docs);
       history.push({ role: 'ai', text: answer, engine: label, docs: docs.slice(0, 3).map(function (d) { return { ch: d.ch, title: d.title }; }) });
     } catch (e) {
       err = friendly(e); bubble.className = 'msg ai err'; bubble.innerHTML = md(err);
