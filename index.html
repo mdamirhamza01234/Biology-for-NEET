@@ -344,6 +344,15 @@
   .composer-in { max-width: 1040px; margin: 0 auto; display: flex; align-items: flex-end; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 6px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.35); }
   .composer-in:focus-within { border-color: var(--blue); }
   .composer textarea { flex: 1; min-width: 0; resize: none; max-height: 120px; background: none; border: 0; outline: 0; color: var(--text); font: inherit; font-size: 15px; line-height: 1.4; padding: 9px 0; -webkit-user-select: text; user-select: text; }
+  .attach { width: 40px; height: 40px; border-radius: 50%; flex: none; display: grid; place-items: center; background: var(--surface2, rgba(148, 163, 184, .16)); border: 1px solid var(--line); color: var(--text); cursor: pointer; }
+  .attach svg { width: 20px; height: 20px; stroke: currentColor; stroke-width: 2.4; fill: none; }
+  .attach:active { transform: scale(.9); }
+  .aprev { max-width: 1040px; margin: 0 auto 6px; display: flex; align-items: center; gap: 10px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .aprev[hidden] { display: none; }
+  .aprev img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; }
+  .aprev span { flex: 1; font-size: 12px; color: #94a3b8; }
+  .aprev button { border: 0; background: rgba(148, 163, 184, .2); color: var(--text); width: 30px; height: 30px; border-radius: 50%; font-size: 16px; cursor: pointer; }
+  .msg .uimg { display: block; max-width: 220px; max-height: 220px; border-radius: 10px; margin-bottom: 6px; }
   .composer textarea::placeholder { color: #62759a; }
   .send { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center; background: linear-gradient(135deg, var(--cyan), var(--blue)); transition: transform .12s, opacity .2s; }
   .send svg { width: 20px; height: 20px; stroke: #04112b; stroke-width: 2.4; }
@@ -734,7 +743,10 @@
     </div>
     <div class="chat" id="chat" aria-live="polite"></div>
     <form class="composer" id="composer" autocomplete="off">
+      <div class="aprev" id="aiPrev" hidden></div>
       <div class="composer-in">
+        <button class="attach" id="aiAttach" type="button" aria-label="Photo jodo"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <input type="file" id="aiFile" accept="image/*" hidden>
         <textarea id="aiInput" rows="1" placeholder="Apna sawal likho…" aria-label="Your question"></textarea>
         <button class="send" id="aiSend" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
       </div>
@@ -1696,6 +1708,29 @@
     }
   });
 
+
+  /* ---------- photo attach ---------- */
+  var pend = null;
+  function attReset() { pend = null; var p = $('aiPrev'); if (p) { p.hidden = true; p.innerHTML = ''; } var fi = $('aiFile'); if (fi) fi.value = ''; }
+  function attLoad(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    var rd = new FileReader();
+    rd.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var mx = 1280, sc = Math.min(1, mx / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(im.width * sc); cv.height = Math.round(im.height * sc);
+        var cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.drawImage(im, 0, 0, cv.width, cv.height);
+        var url = cv.toDataURL('image/jpeg', 0.85); pend = { mime: 'image/jpeg', data: url.split(',')[1], url: url };
+        var p = $('aiPrev'); p.innerHTML = '<img alt="" src="' + url + '"><span>Photo ready. Ab sawal likho (ya seedha bhejo).</span><button type="button" aria-label="Hatao">✕</button>'; p.hidden = false;
+        p.querySelector('button').onclick = attReset; input.focus();
+      };
+      im.onerror = function () { attReset(); };
+      im.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+
   function friendly(e) {
     if (e instanceof GErr) {
       if (isKeyErr(e)) return (e.status === 400 ? 'Gemini API key galat lag rahi hai. Settings mein dobara check karo.' : 'Gemini ne is key ko allow nahi kiya (' + e.status + '). Key sahi hai? Naya key aistudio.google.com/apikey se banao (AIza... se shuru hota hai).') + (e.msg ? '\n\nGoogle ka message: ' + e.msg.slice(0, 220) : '');
@@ -1770,7 +1805,7 @@
     function mk(search) {
       var o = {
         systemInstruction: { parts: [{ text: sys + liveInfo() }] },
-        contents: msgs.map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }; }),
+        contents: msgs.map(function (m) { var pt = [{ text: m.text }]; if (m.img && m.img.data) pt.push({ inlineData: { mimeType: m.img.mime, data: m.img.data } }); return { role: m.role === 'user' ? 'user' : 'model', parts: pt }; }),
         generationConfig: { temperature: 0.4, maxOutputTokens: 6144 }
       };
       if (search) o.tools = [{ google_search: {} }];
@@ -1877,12 +1912,18 @@
     return S.key ? 'gemini' : 'none';
   }
   async function ask() {
-    var q = input.value.trim(); if (!q || busy) return;
+    var q = input.value.trim(); if ((!q && !pend) || busy) return;
+    var im = pend; if (!q) q = 'Is photo mein jo question/diagram/notes hain unhe padh kar step by step samjhao ya solve karo.'; attReset();
     var sg = $('suggest'); if (sg) sg.remove();
     input.value = ''; input.style.height = 'auto';
     var ch = +$('aiChapter').value || 0;
-    history.push({ role: 'user', text: q }); addMsg('user', q);
+    history.push({ role: 'user', text: q, img: im ? 1 : 0 }); var ub = addMsg('user', q);
+    if (im) { var ti = new Image(); ti.src = im.url; ti.className = 'uimg'; ub.insertBefore(ti, ub.firstChild); }
     var engine = pickEngine();
+    if (im) {
+      if (S.key) engine = 'gemini';
+      else { var m1 = { role: 'ai', err: true, text: 'Photo samajhne ke liye Gemini chahiye. ⚙ Settings mein Gemini API key daalo. Gemma 1B (offline) sirf text padh sakta hai, photo nahi.' }; history.push(m1); addMsg('ai', m1.text, m1); save('bio_ai_chat', history.slice(-40)); scrollEnd(); openSheet(); return; }
+    }
     if (engine === 'none') {
       var m0 = { role: 'ai', err: true, text: 'AI abhi set up nahi hai. ⚙ Settings mein Gemini API key daalo (online ke liye) ya Gemma model load karo (offline ke liye).' };
       history.push(m0); addMsg('ai', m0.text, m0); save('bio_ai_chat', history.slice(-40)); scrollEnd(); openSheet(); return;
@@ -1895,14 +1936,14 @@
     var label = '', answer = '', err = null;
     try {
       if (engine === 'gemini') {
-        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)') + figPrompt(fcand) + simPrompt() + (imgReq ? '\n\nIMAGE: the app itself will generate an AI image for this request, so do NOT draw an SVG or write image code; give only a short explanation (and a [[FIG:id]] marker if a PDF figure matches).' : '');
+        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)') + (im ? '\n\nPHOTO: the student attached a photo (a question, diagram, notes or handwritten work). Read it carefully. If it contains a question, first write the question in one line, then solve it step by step with the correct NCERT/NEET method and a clear final answer. If it is a diagram, identify and explain it and label its parts.' : '') + figPrompt(fcand) + simPrompt() + (imgReq ? '\n\nIMAGE: the app itself will generate an AI image for this request, so do NOT draw an SVG or write image code; give only a short explanation (and a [[FIG:id]] marker if a PDF figure matches).' : '');
         var past = [], hs = history.slice(0, -1);
         for (var hi = 0; hi + 1 < hs.length; hi++) { if (hs[hi].role === 'user' && hs[hi + 1].role === 'ai' && !hs[hi + 1].err) { past.push(hs[hi], hs[hi + 1]); hi++; } }
         past = past.slice(-6);
         while (past.length && past[0].role !== 'user') past.shift();
-        try { var g = await askGemini(sys, past.concat([{ role: 'user', text: q }]), onText); answer = g.text; label = 'Gemini · ' + g.model; }
+        try { var g = await askGemini(sys, past.concat([{ role: 'user', text: q, img: im }]), onText); answer = g.text; label = 'Gemini · ' + g.model; }
         catch (e) {
-          if (S.mode === 'auto' && llm && !isKeyErr(e)) { engine = 'device'; docs = search(q, ch, 2); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; } else throw e;
+          if (S.mode === 'auto' && llm && !im && !isKeyErr(e)) { engine = 'device'; docs = search(q, ch, 2); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; } else throw e;
         }
       }
       if (engine === 'device') { label = 'Gemma · on-device'; answer = await askGemma(q, buildContext(docs, 2400), onText); }
@@ -1956,6 +1997,8 @@
       if (st && st.hasModel) { gSay('Saved model mila. Load ho raha hai…'); nativeLoad(false).catch(function (e) { gSay(e && e.message ? e.message : 'Gemma load nahi hua.', 'bad'); }); }
     }).catch(function () {});
   }
+  $('aiAttach').addEventListener('click', function () { $('aiFile').click(); });
+  $('aiFile').addEventListener('change', function () { if (this.files && this.files[0]) attLoad(this.files[0]); });
   chatEl.addEventListener('click', dgClick);
   chatEl.addEventListener('click', simClick);
   renderAll(); updateStatus();
