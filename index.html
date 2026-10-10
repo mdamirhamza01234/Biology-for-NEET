@@ -285,6 +285,15 @@
   .dl + sup, .dl + sub { vertical-align: top; line-height: 1; }
   .dl + sub { vertical-align: bottom; }
   .mb { display: block; text-align: center; margin: 8px 0; overflow-x: auto; padding: 4px 0; }
+  .msg.ai sub, .msg.ai sup { font-size: .75em; line-height: 0; }
+  .mj .mj { font-size: 1em; }
+  .xr { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 .3em; line-height: 1.15; text-align: center; }
+  .xt, .xb { font-size: .78em; padding: 0 .25em; white-space: nowrap; min-height: 1.1em; }
+  .xm { padding: 0 .1em; }
+  .xl { position: relative; align-self: stretch; min-width: 2.4em; height: 0; border-top: 1.4px solid currentColor; margin: .2em 0; }
+  .xl::after { content: ''; position: absolute; right: -1px; top: -4.3px; width: 6px; height: 6px; border: solid currentColor; border-width: 0 1.4px 1.4px 0; transform: rotate(-45deg); }
+  .xl.lf::after { right: auto; left: -1px; transform: rotate(135deg); }
+  .xe { font-size: 1.6em; line-height: .7; min-width: 1.4em; }
   .fr { display: inline-flex; flex-direction: column; vertical-align: middle; text-align: center; margin: 0 3px; font-size: .95em; }
   .fr > .nu { border-bottom: 1px solid currentColor; padding: 0 4px; } .fr > .de { padding: 0 4px; }
   .ov { border-top: 1px solid currentColor; padding: 0 1px; }
@@ -950,11 +959,12 @@
     '- If the context does not cover the question, answer from standard Class 11 NCERT biology and clearly say it is general knowledge, not from the book.\n' +
     '- Reply in the same language the student uses (Hindi, English or Hinglish). Keep it short and step by step. Give key terms, a tiny example and a NEET exam tip or mnemonic when useful.\n' +
     '- Write any equation in simple LaTeX inside single dollar signs, e.g. $6CO_2 + 12H_2O \\rightarrow C_6H_{12}O_6 + 6O_2 + 6H_2O$, and put an important equation alone on a line as $$ ... $$. Never write math with curly braces in plain text.\n' +
+    '- For chemical reactions write every formula with subscripts (e.g. $C_6H_{12}O_6$) and put the conditions on the arrow, e.g. $$6CO_2 + 12H_2O \\xrightarrow[\\text{Chlorophyll}]{\\text{Light}} C_6H_{12}O_6 + 6H_2O + 6O_2$$. Always give the complete balanced equation with all products, never a partial one.\n' +
     '- Use short bullet points, NCERT terms, and mention NEET-style traps (exceptions, similar-looking terms) when useful. If you are not sure, say so.';
 
   /* ---------- rendering ---------- */
   /* ---------- LaTeX -> HTML (offline, tiny) ---------- */
-  var SYM = { alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',theta:'θ',vartheta:'ϑ',lambda:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',omega:'ω',
+  var SYM = { longrightarrow:'⟶',Longrightarrow:'⟹',longleftarrow:'⟵',rightleftharpoons:'⇌',leftrightharpoons:'⇌',rightleftarrows:'⇄',uparrow:'↑',downarrow:'↓',bullet:'•',checkmark:'✓', alpha:'α',beta:'β',gamma:'γ',delta:'δ',epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',theta:'θ',vartheta:'ϑ',lambda:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',rho:'ρ',sigma:'σ',tau:'τ',phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',omega:'ω',
     Gamma:'Γ',Delta:'Δ',Theta:'Θ',Lambda:'Λ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Psi:'Ψ',Omega:'Ω',
     cdot:'·',times:'×',div:'÷',pm:'±',mp:'∓',approx:'≈',sim:'∼',simeq:'≃',ll:'≪',gg:'≫',le:'≤',leq:'≤',ge:'≥',geq:'≥',ne:'≠',neq:'≠',equiv:'≡',propto:'∝',infty:'∞',
     to:'→',rightarrow:'→',leftarrow:'←',Rightarrow:'⇒',Leftrightarrow:'⇔',leftrightarrow:'↔',partial:'∂',nabla:'∇',int:'∫',oint:'∮',sum:'∑',prod:'∏',circ:'°',degree:'°',
@@ -965,8 +975,48 @@
   function svgP(d) { return '<svg viewBox="0 0 10 100" preserveAspectRatio="none" aria-hidden="true"><path d="' + d + '" fill="none" stroke="currentColor" stroke-width="1.3" vector-effect="non-scaling-stroke"/></svg>'; }
   var DLM = { sqrt: svgP('M0 62L2.5 56L5 98L10 1') };
   function dsvg(ch) { return DP[ch] ? svgP(DP[ch]) : (ch === '.' ? '' : ch); }
+  /* ---------- chemistry helpers (formulas, ions, reaction arrows) ---------- */
+  var EL = {}; ('H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Ti V Cr Mn Fe Co Ni Cu Zn As Se Br Ag Sn I Ba Au Hg Pb U').split(' ').forEach(function (e) { EL[e] = 1; });
+  var DIATOMIC = /^(?:[HONF]2|Cl2|Br2|I2|O3|P4|S8)$/;
+  function fmtFormula(f) { return f.replace(/(\d+)/g, '<sub>$1</sub>'); }
+  function ionFmt(t) {
+    var sg = t.slice(-1) === '+' ? '+' : '−', r = t.slice(0, -1), ch = sg;
+    if (/^(?:Ca2|Mg2|Fe2|Fe3|Cu2|Zn2|Mn2|Al3)$/.test(r)) { ch = r.slice(-1) + sg; r = r.slice(0, -1); }
+    return fmtFormula(r) + '<sup>' + ch + '</sup>';
+  }
+  function arrowHtml(up, dn, kind) {
+    return '<span class="xr"><span class="xt">' + up + '</span>' + (kind === 2 ? '<span class="xe">⇌</span>' : '<span class="xl' + (kind === 1 ? ' lf' : '') + '"></span>') + '<span class="xb">' + dn + '</span></span>';
+  }
+  var ION_RE = /(?<![A-Za-z0-9])(?:Ca2\+|Mg2\+|Fe2\+|Fe3\+|Cu2\+|Zn2\+|Mn2\+|Al3\+|NH4\+|H3O\+|HCO3-|NO3-|NO2-|Na\+|K\+|H\+|Li\+|Cl-|OH-)(?![A-Za-z0-9])/g;
+  var FORM_RE = /(?<![A-Za-z0-9_\u0001.])(\d{0,2})((?:[A-Z][a-z]?\d{0,2}|\((?:[A-Z][a-z]?\d{0,2})+\)\d{0,2})+)(?![A-Za-z0-9\u0002])/g;
+  function chemText(s) {
+    s = s.replace(/(?<![A-Za-z0-9])(\d{0,2})(C6H1206|H20|C02)(?![A-Za-z0-9])/g, function (a, co, f) { return co + ({ C6H1206: 'C6H12O6', H20: 'H2O', C02: 'CO2' })[f]; });
+    if (/(?:→|-{1,2}&gt;)/.test(s) && /[A-Z][a-z]?\d/.test(s)) s = s.replace(/(?<=\+\s{0,2})(\d{0,2})02(?![A-Za-z0-9])/g, '$1O2');
+    s = s.replace(ION_RE, ionFmt);
+    s = s.replace(FORM_RE, function (all, co, f) {
+      if (!/\d/.test(f)) return all;
+      if (f !== 'FADH2') {
+        var sy = f.match(/[A-Z][a-z]?/g) || [];
+        for (var k = 0; k < sy.length; k++) if (!EL[sy[k]]) return all;
+        if (sy.length < 2 && !DIATOMIC.test(f)) return all;
+      }
+      return co + fmtFormula(f);
+    });
+    return s.replace(/-{1,2}&gt;(?:\[([^\]\n]*)\])?(?:\[([^\]\n]*)\])?/g, function (a, up, dn) { return (up || dn) ? arrowHtml(up || '', dn || '', 0) : '→'; });
+  }
+  function isChemTex(s) {
+    var runs = s.match(/(?:[A-Z][a-z]?(?:_\{?\d+\}?)?){2,}/g) || [], ok = false;
+    for (var k = 0; k < runs.length && !ok; k++) {
+      if (runs[k].indexOf('_') < 0) continue;
+      var sy = runs[k].match(/[A-Z][a-z]?/g), good = true;
+      sy.forEach(function (e) { if (!EL[e]) good = false; });
+      ok = good;
+    }
+    return ok && (/\\(?:rightarrow|xrightarrow|longrightarrow|rightleftharpoons|xrightleftharpoons|to)(?![a-zA-Z])/.test(s) || /H_\{?\d*\}?O|CO_\{?\d|\bC_\{?\d+\}?H|NH_|SO_|PO_|NO_/.test(s));
+  }
   function tex(s) {
-    var i = 0, n = s.length;
+    var i = 0, n = s.length, chem = isChemTex(s);
+    function lab(r) { r = r.trim(); if (!r) return ''; return /[\\^_{]/.test(r) ? tex(r) : '<span class="up">' + r + '</span>'; }
     function delim() { while (s[i] === ' ') i++; var c = s[i++] || ''; if (c === '\\') { var m2 = s.slice(i).match(/^[a-zA-Z]+/); if (m2) { i += m2[0].length; return m2[0] === 'langle' ? '⟨' : m2[0] === 'rangle' ? '⟩' : ''; } c = s[i++] || ''; } return c; }
     function rawGroup() { if (s[i] !== '{') return s[i] ? s[i++] : ''; var d = 0, st = ++i; for (; i < n; i++) { if (s[i] === '{') d++; else if (s[i] === '}') { if (!d) break; d--; } } var r = s.slice(st, i); i++; return r; }
     function seq(stop) { var o = ''; while (i < n) { var c = s[i]; if (c === '}') { i++; if (stop) return o; continue; } o += withScripts(); } return o; }
@@ -991,6 +1041,17 @@
         nm = m[0]; i += nm.length;
         if (nm === 'frac' || nm === 'dfrac' || nm === 'tfrac') { var a = atom(), d = atom(); return '<span class="fr"><span class="nu">' + a + '</span><span class="de">' + d + '</span></span>'; }
         if (nm === 'sqrt') { if (s[i] === '[') { var k = s.indexOf(']', i); i = k < 0 ? n : k + 1; } return '<span class="sq"><span class="rd">' + DLM.sqrt + '</span><span class="ov">' + atom() + '</span></span>'; }
+        if (nm === 'xrightarrow' || nm === 'xleftarrow' || nm === 'xrightleftharpoons' || nm === 'xleftrightarrow' || nm === 'xlongrightarrow') {
+          while (s[i] === ' ') i++;
+          var below = '', above = '';
+          if (s[i] === '[') { var kb = s.indexOf(']', i); below = s.slice(i + 1, kb < 0 ? n : kb); i = kb < 0 ? n : kb + 1; }
+          while (s[i] === ' ') i++;
+          if (s[i] === '{') above = rawGroup();
+          return arrowHtml(lab(above), lab(below), nm === 'xleftarrow' ? 1 : (nm === 'xrightleftharpoons' || nm === 'xleftrightarrow') ? 2 : 0);
+        }
+        if (nm === 'overset' || nm === 'stackrel') { var o1 = atom(), o2 = atom(); return '<span class="xr"><span class="xt">' + o1 + '</span><span class="xm">' + o2 + '</span></span>'; }
+        if (nm === 'underset') { var u1 = atom(), u2 = atom(); return '<span class="xr"><span class="xm">' + u2 + '</span><span class="xb">' + u1 + '</span></span>'; }
+        if (nm === 'ce') return '<span class="up">' + chemText(rawGroup()) + '</span>';
         if (nm === 'text' || nm === 'mathrm' || nm === 'operatorname' || nm === 'textrm') return '<span class="up">' + rawGroup() + '</span>';
         if (nm === 'mathbf' || nm === 'textbf' || nm === 'boldsymbol') return '<b>' + atom() + '</b>';
         if (nm === 'vec') return '<span class="vc">' + atom() + '</span>';
@@ -1002,9 +1063,9 @@
         if (nm === 'big' || nm === 'Big' || nm === 'bigg' || nm === 'Bigg') return '';
         if (nm === 'quad' || nm === 'qquad') return '\u2003';
         if (FUNCS[nm]) return '<span class="up">' + nm + '</span>';
-        return SYM[nm] || nm;
+        return SYM[nm] !== undefined ? SYM[nm] : '';
       }
-      if (/[a-zA-Z]/.test(c)) { m = s.slice(i).match(/^[a-zA-Z]+/)[0]; if (FUNCS[m]) { i += m.length; return '<span class="up">' + m + '</span>'; } i++; return '<i>' + c + '</i>'; }
+      if (/[a-zA-Z]/.test(c)) { m = s.slice(i).match(/^[a-zA-Z]+/)[0]; if (FUNCS[m]) { i += m.length; return '<span class="up">' + m + '</span>'; } i++; return chem ? c : '<i>' + c + '</i>'; }
       if (c === '&') { m = s.slice(i).match(/^&[a-z]+;/); if (m) { i += m[0].length; return m[0] === '&lt;' ? '&lt;' : m[0] === '&gt;' ? '&gt;' : m[0]; } }
       if (c === '~') { i++; return ' '; }
       if (c === "'") { i++; return '′'; }
@@ -1022,7 +1083,7 @@
     });
   }
   function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-  function inline(s) { return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, '$1<i>$2</i>'); }
+  function inline(s) { s = chemText(s); return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, '$1<i>$2</i>'); }
   function md(src) {
     var store = [], lines = extractMath(esc(String(src).replace(/\r/g, '')), store).split('\n'), out = [], list = null, para = [], m;
     function flushP() { if (para.length) { out.push('<p>' + inline(para.join('<br>')) + '</p>'); para = []; } }
@@ -1229,7 +1290,7 @@
     llm = await mod.LlmInference.createFromOptions(fileset, { baseOptions: base, maxTokens: 2048, topK: 40, temperature: 0.5, randomSeed: 101 });
     gSay('Gemma ready ✓', 'ok'); updateStatus();
   }
-  var G_RULES = 'You are Biology AI, a Class 11 NCERT Biology (NEET) tutor. Answer in simple English, short and correct. Use only standard NCERT facts; never invent names, numbers or examples. Write any equation inside dollar signs like $6CO_2 + 6H_2O \\rightarrow C_6H_{12}O_6 + 6O_2$. Use bullet points starting with "- ". If the answer is not in the context, use your biology knowledge.';
+  var G_RULES = 'You are Biology AI, a Class 11 NCERT Biology (NEET) tutor. Answer in simple English, short and correct. Use only standard NCERT facts; never invent names, numbers or examples. Write chemical formulas in plain text using the letter O, never zero (C6H12O6, H2O, CO2), and give the full balanced equation with conditions on the arrow: 6CO2 + 12H2O ->[Light][Chlorophyll] C6H12O6 + 6H2O + 6O2. For other equations use dollar signs like $RQ = \\frac{CO_2}{O_2}$. Use bullet points starting with "- ". If the answer is not in the context, use your biology knowledge.';
   var BR = '(?:\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\})';
   var ATOM = '(?:\\\\[a-zA-Z]+' + BR + '*|[A-Za-z0-9]+(?:[_^](?:' + BR + '|\\w))+|[_^](?:' + BR + '|\\w))';
   var RUN_RE = new RegExp(ATOM + '(?:[ \\t]?(?:' + ATOM + '|[=+\\-*/()|<>]|(?:[A-Za-z]|\\d+(?:\\.\\d+)?)(?![A-Za-z])))*', 'g');
