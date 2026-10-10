@@ -1151,6 +1151,11 @@
       if (!c) return '<div class="dgp">Diagram sahi se nahi bana — dobara pucho.</div>';
       return '<div class="dgm"><div class="dgb"><button type="button" data-dg="zoom">⤢ Bada dekho</button><button type="button" data-dg="save">⬇ Save</button></div>' + c + '</div>';
     }
+    if (lang === 'sim' || lang === 'html' && /<canvas[\s>]/i.test(body) && /<script/i.test(body)) {
+      if (!closed) return '<div class="dgp">' + (done ? 'Simulation poori nahi aayi — dobara pucho.' : '<span class="dots"><i></i><i></i><i></i></span> Simulation ban rahi hai…') + '</div>';
+      var sid = simHash(body); SIMS[sid] = body.trim();
+      return '<div class="fgc" data-sim="' + sid + '"><div class="ffl" data-a="simrun">▶ Simulation chalao<small>Tap karke chalao · sliders badlo · 3D mein ungli se ghumao</small></div><div class="fbt"><button type="button" data-a="simfull">⤢ Full screen</button></div></div>';
+    }
     return '<pre class="cb"><code>' + esc(body) + '</code></pre>';
   }
   function dgPng(svgEl, name) {
@@ -1229,7 +1234,7 @@
     opts = opts || {};
     var el = document.createElement('div');
     el.className = 'msg ' + role + (opts.err ? ' err' : '');
-    if (role === 'user') el.textContent = text; else { var sp = figSplit(text); el.innerHTML = md(sp.text, true); figAttach(el, sp.ids, !!(opts && opts.flash)); }
+    if (role === 'user') el.textContent = text; else { var sp = figSplit(text); el.innerHTML = md(sp.text, true); figAttach(el, sp.ids, !!(opts && opts.flash)); simAttach(el, sp.sims); }
     chatEl.appendChild(el);
     return el;
   }
@@ -1317,12 +1322,14 @@
     return t;
   }
   function figSplit(text, partial) {
-    var ids = [], t = String(text || '').replace(/\[\[FIG:([A-Za-z0-9_.\-]+)\]\]/g, function (m, id) { if (FIG_BY[id] && ids.indexOf(id) < 0) ids.push(id); return ''; });
-    if (partial) t = t.replace(/\[\[F?I?G?:?[A-Za-z0-9_.\-]*\]?\]?$/, '');
-    return { text: t.replace(/^\s+/, ''), ids: ids.slice(0, 2) };
+    var ids = [], sims = [], t = String(text || '').replace(/\[\[FIG:([A-Za-z0-9_.\-]+)\]\]/g, function (m, id) { if (FIG_BY[id] && ids.indexOf(id) < 0) ids.push(id); return ''; });
+    t = t.replace(/\[\[SIM:([A-Za-z0-9_.\-]+)\]\]/g, function (m, k) { if (simByKey(k) && sims.indexOf(k) < 0) sims.push(k); return ''; });
+    if (partial) t = t.replace(/\[\[[A-Z]*:?[A-Za-z0-9_.\-]*\]?\]?$/, '');
+    return { text: t.replace(/^\s+/, ''), ids: ids.slice(0, 2), sims: sims.slice(0, 1) };
   }
+  function figImgPrompt(f) { return 'Clean, colourful, well-labelled educational textbook illustration of: ' + (f.cap || f.t) + ' (' + f.t + ', Class 11 NCERT, NEET). White background, large clear English labels, no watermark.'; }
   function figEsc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function figTitle(f) { return f.n ? 'Figure ' + f.n + (f.cap ? ' · ' + f.cap : '') : 'Diagram · ' + f.t + ' · page ' + f.p; }
+  function figTitle(f) { if (f.ti) return f.ti; return f.n ? 'Figure ' + f.n + (f.cap ? ' · ' + f.cap : '') : 'Diagram · ' + f.t + ' · page ' + f.p; }
   function figDeck() { try { return JSON.parse(localStorage.getItem('fig_deck') || '[]').filter(function (i) { return FIG_BY[i]; }); } catch (e) { return []; } }
   function figDeckSave(a) { try { localStorage.setItem('fig_deck', JSON.stringify(a)); } catch (e) {} }
   function figOpenPdf(f) {
@@ -1364,13 +1371,14 @@
     var inDeck = figDeck().indexOf(f.id) > -1;
     el.innerHTML = (flash ? '<div class="ffl" data-a="flip">' + figEsc(figTitle(f)) + '<small>Pehle yaad karo, phir tap karke diagram dekho</small></div>' : '<img alt="' + figEsc(figTitle(f)) + '" loading="lazy" src="' + f.f + '" data-a="zoom"><div class="fcap">' + figEsc(figTitle(f)) + '</div>') +
       '<div class="fsub">Ch ' + f.ch + ' · ' + figEsc(f.t) + ' · PDF page ' + f.p + ' · tumhare PDF se</div>' +
-      '<div class="fbt"><button type="button" data-a="pdf">Open in PDF</button><button type="button" data-a="deck">' + (inDeck ? '✓ In flashcards' : '＋ Flashcard') + '</button><button type="button" data-a="decks">My cards (' + figDeck().length + ')</button></div>';
+      '<div class="fbt"><button type="button" data-a="pdf">Open in PDF</button><button type="button" data-a="deck">' + (inDeck ? '✓ In flashcards' : '＋ Flashcard') + '</button><button type="button" data-a="decks">My cards (' + figDeck().length + ')</button><button type="button" data-a="aiimg">🎨 AI image</button></div>';
     el.addEventListener('click', function (e) {
       var a = e.target.getAttribute && e.target.getAttribute('data-a'); if (!a) return;
       if (a === 'zoom') figZoom(f);
       else if (a === 'flip') {
         var h = el.querySelector('.ffl'); var im = document.createElement('img'); im.src = f.f; im.alt = ''; im.setAttribute('data-a', 'zoom'); h.replaceWith(im);
       }
+      else if (a === 'aiimg') { if (!el.getAttribute('data-ai')) { el.setAttribute('data-ai', '1'); aiImageInto(el, figImgPrompt(f)); } }
       else if (a === 'pdf') figOpenPdf(f);
       else if (a === 'deck') { var d = figDeck(), k = d.indexOf(f.id); if (k > -1) d.splice(k, 1); else d.push(f.id); figDeckSave(d); e.target.textContent = k > -1 ? '＋ Flashcard' : '✓ In flashcards'; var bd = el.querySelector('[data-a=decks]'); if (bd) bd.textContent = 'My cards (' + d.length + ')'; }
       else if (a === 'decks') { var dd = figDeck(); if (dd.length) figDeckView(Math.max(0, dd.indexOf(f.id))); }
@@ -1380,6 +1388,313 @@
   function figAttach(el, ids, flash) {
     (ids || []).forEach(function (id) { if (FIG_BY[id]) el.appendChild(figCard(FIG_BY[id], flash)); });
   }
+
+
+  /* ---------- simulations (2D / 3D) + AI image ---------- */
+  var SIMS = {};
+  function simHash(s) { var h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return 's' + (h >>> 0).toString(36); }
+  function PRE() {
+    var C = document.getElementById('c'), g = C.getContext('2d'), W = 1, H = 1, P = {}, run = true, T = 0, M = null, last = 0, box = document.getElementById('ctl');
+    var yaw = 0.6, pit = 0.35, dn = null;
+    function rs() { var r = window.devicePixelRatio || 1; W = C.clientWidth || 300; H = C.clientHeight || 300; C.width = W * r; C.height = H * r; g.setTransform(r, 0, 0, r, 0, 0); }
+    window.addEventListener('resize', rs);
+    function dec(s) { var t = String(s || 1); return t.indexOf('.') > -1 ? t.split('.')[1].length : 0; }
+    function sl(k, l, a, b, v, s, u) {
+      var d = document.createElement('label'); d.innerHTML = l + ' <b></b>';
+      var i = document.createElement('input'); i.type = 'range'; i.min = a; i.max = b; i.step = s || 1; i.value = v; P[k] = +v;
+      var o = d.querySelector('b');
+      function up() { P[k] = +i.value; o.textContent = (+i.value).toFixed(dec(s)) + (u || ''); }
+      i.oninput = function () { up(); if (M && M.change) M.change(k); };
+      up(); d.appendChild(i); box.appendChild(d); return i;
+    }
+    C.addEventListener('pointerdown', function (e) { dn = [e.clientX, e.clientY]; try { C.setPointerCapture(e.pointerId); } catch (x) {} });
+    C.addEventListener('pointermove', function (e) { if (!dn) return; yaw += (e.clientX - dn[0]) * 0.01; pit = Math.max(-1.4, Math.min(1.4, pit + (e.clientY - dn[1]) * 0.01)); dn = [e.clientX, e.clientY]; });
+    C.addEventListener('pointerup', function () { dn = null; });
+    function pr(x, y, z) {
+      var cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pit), sp = Math.sin(pit);
+      var x1 = x * cy + z * sy, z1 = -x * sy + z * cy, y1 = y * cp - z1 * sp, z2 = y * sp + z1 * cp;
+      var S = Math.min(W, H) * 0.36, f = 1 / (1 + 0.18 * z2);
+      return [W / 2 + x1 * S * f, H / 2 - y1 * S * f, z2, f];
+    }
+    function arrow(x0, y0, x1, y1, col, w) {
+      g.strokeStyle = col; g.fillStyle = col; g.lineWidth = w || 2; g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke();
+      var a = Math.atan2(y1 - y0, x1 - x0); g.beginPath(); g.moveTo(x1, y1); g.lineTo(x1 - 9 * Math.cos(a - 0.4), y1 - 9 * Math.sin(a - 0.4)); g.lineTo(x1 - 9 * Math.cos(a + 0.4), y1 - 9 * Math.sin(a + 0.4)); g.closePath(); g.fill();
+    }
+    function txt(s, x, y, col, sz, al) { sz = sz || 12; g.fillStyle = col || '#e2e8f0'; g.font = sz + 'px system-ui,sans-serif'; var w = g.measureText(s).width, mx = W - 20 - (al === 'center' ? 0 : x); if (al !== 'center' && w > mx && mx > 60) { sz = Math.max(8, sz * mx / w); g.font = sz + 'px system-ui,sans-serif'; } g.textAlign = al || 'left'; g.fillText(s, x, y); }
+    function play(m) { M = m; rs(); if (m.setup) m.setup(); last = performance.now(); requestAnimationFrame(tick); }
+    function tick(n) {
+      var dt = Math.min(0.05, (n - last) / 1000); last = n;
+      if (run) { T += dt; if (M.step) M.step(dt); }
+      g.clearRect(0, 0, W, H); M.draw(T); requestAnimationFrame(tick);
+    }
+    document.getElementById('pp').onclick = function () { run = !run; this.textContent = run ? '⏸' : '▶'; };
+    document.getElementById('rr').onclick = function () { T = 0; if (M && M.reset) M.reset(); };
+  }
+  function fnBody(f) { var s = f.toString(); return s.slice(s.indexOf('{') + 1, s.lastIndexOf('}')); }
+  function simDoc(title, note, fn) {
+    var css = 'html,body{margin:0;background:#0b1220;color:#e5e7eb;font:13px system-ui,sans-serif}#bar{display:flex;gap:8px;align-items:center;padding:6px 8px}#bar b{flex:1;font-size:13px}button{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:8px;padding:6px 12px;font-size:14px}canvas{display:block;width:100%;height:340px;touch-action:none;background:#0f172a}@media(min-height:720px){canvas{height:52vh}}#ctl{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;padding:8px 10px}#ctl label{display:block;font-size:12px}#ctl label b{color:#7dd3fc}#ctl input{width:100%}#note{padding:2px 10px 10px;font-size:12px;color:#94a3b8;line-height:1.4}';
+    var t = String(title).replace(/</g, '&lt;');
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>' + css + '</style></head><body><div id="bar"><b>' + t + '</b><button id="pp" type="button">⏸</button><button id="rr" type="button">↺</button></div><canvas id="c"></canvas><div id="ctl"></div><div id="note">' + String(note).replace(/</g, '&lt;') + '</div><script>(function(){' + fnBody(PRE) + fnBody(fn) + '})();<\/script></body></html>';
+  }
+  function simSafe(html) {
+    var meta = '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'unsafe-inline\'; style-src \'unsafe-inline\'; img-src data: blob:; media-src data: blob:">';
+    html = String(html || '');
+    if (/<head[^>]*>/i.test(html)) return html.replace(/<head[^>]*>/i, function (m) { return m + meta; });
+    if (/<html[^>]*>/i.test(html)) return html.replace(/<html[^>]*>/i, function (m) { return m + '<head>' + meta + '</head>'; });
+    return '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' + meta + '<style>html,body{margin:0;background:#0f172a;color:#e5e7eb}</style></head><body>' + html + '</body></html>';
+  }
+  var SIM_LIB = [];  /* filled below: {key, title, re, desc, html} */
+  function simFind(q) { q = String(q).toLowerCase(); for (var i = 0; i < SIM_LIB.length; i++) if (SIM_LIB[i].re.test(q)) return SIM_LIB[i]; return null; }
+  function simByKey(k) { for (var i = 0; i < SIM_LIB.length; i++) if (SIM_LIB[i].key === k) return SIM_LIB[i]; return null; }
+  function wantsSim(q) { return /simulat|animat|\b3\s*-?\s*d\b|\b2\s*-?\s*d\b|interactive|chala\s*(ke|k|do)|chalake|live demo|motion dikha|experiment dikha|slider/i.test(q); }
+  function simMissing() {
+    return 'Is topic ki ready-made simulation abhi nahi hai. Ye simulations maujood hain: ' + SIM_LIB.map(function (s) { return s.title; }).join(', ') + '. Gemini key ke saath koi bhi topic ki custom simulation ban sakti hai.';
+  }
+  function simPrompt() {
+    var t = '\n\nSIMULATIONS: when a concept is easier to understand by watching it move or by changing parameters (for example ' + SIM_EX + '), or the student asks for a simulation, animation, 2D, 3D or interactive demo, include a simulation.';
+    t += ' If one of these built-in simulations fits exactly, write [[SIM:key]] on its own line (no code): ' + SIM_LIB.map(function (s) { return s.key + ' = ' + s.desc; }).join('; ') + '.';
+    t += ' Otherwise write ONE ```sim fenced block containing a complete self-contained HTML document starting with <!doctype html>, followed by a 2-4 line explanation of what to watch and which slider to move. HTML rules: no external files, libraries, fonts, images or network; one <canvas id="c"> (width 100%, height 340px) animated with requestAnimationFrame; at least two <input type="range"> sliders with visible labels and live values, plus Pause and Reset buttons; dark background (#0f172a) with light text; English labels with units; works with touch and mouse; for 3D write your own perspective projection on the 2D canvas (rotate points by yaw and pitch, drag to rotate, depth-sort, scale to the canvas); use the real formulas and show them on screen; keep the code under about 7000 characters and close every tag and bracket. For pure theory questions do not add a simulation.';
+    return t;
+  }
+  function simAttach(el, keys) {
+    (keys || []).forEach(function (k) {
+      var s = simByKey(k); if (!s) return;
+      var html = simDoc(s.title, s.note, s.fn), id = simHash(k); SIMS[id] = html;
+      var d = document.createElement('div'); d.className = 'fgc'; d.setAttribute('data-sim', id);
+      d.innerHTML = '<div class="ffl" data-a="simrun">▶ ' + figEsc(s.title) + '<small>Tap karke simulation chalao · sliders badlo' + (s.d3 ? ' · 3D: ungli se ghumao' : '') + '</small></div><div class="fbt"><button type="button" data-a="simfull">⤢ Full screen</button></div>';
+      el.appendChild(d);
+    });
+  }
+  function simRun(card) {
+    var id = card.getAttribute('data-sim'), html = SIMS[id]; if (!html) return;
+    var h = card.querySelector('.ffl,.simf'); var f = document.createElement('iframe');
+    f.className = 'simf'; f.setAttribute('sandbox', 'allow-scripts'); f.style.cssText = 'width:100%;height:560px;border:0;display:block;background:#0f172a'; f.srcdoc = simSafe(html);
+    if (h) h.replaceWith(f);
+  }
+  function simFull(card) {
+    var id = card.getAttribute('data-sim'), html = SIMS[id]; if (!html) return;
+    figOverlay(function (o, close) {
+      o.innerHTML = '<div class="fh"><span>Simulation</span><button type="button">Close</button></div><div class="fb" style="padding:0"><iframe sandbox="allow-scripts" style="width:100%;height:100%;border:0;background:#0f172a"></iframe></div>';
+      o.querySelector('iframe').srcdoc = simSafe(html); o.querySelector('button').onclick = close;
+    });
+  }
+  function simClick(e) {
+    var t = e.target.closest ? e.target.closest('[data-a]') : null; if (!t) return;
+    var a = t.getAttribute('data-a'), card = t.closest('[data-sim]'); if (!card) return;
+    if (a === 'simrun') simRun(card); else if (a === 'simfull') simFull(card);
+  }
+  /* ----- AI image (Gemini image model) ----- */
+  function wantsImgGen(q) { return /(generate|create|make|banao|bana\s*do|bana\s*de|banado)[^.?]{0,40}(image|picture|photo|tasveer|illustration)|(image|picture|photo|tasveer|illustration)[^.?]{0,40}(generate|create|banao|bana\s*do|bana\s*de)|ai\s*image|real\s*image|realistic/i.test(q); }
+  async function genImage(prompt) {
+    if (!S.key) throw new Error('Gemini API key daalo (⚙ Settings), tab AI image chalegi.');
+    var models = ['gemini-2.5-flash-image', 'gemini-2.5-flash-image-preview', 'gemini-2.0-flash-preview-image-generation'], lastErr = '';
+    for (var i = 0; i < models.length; i++) {
+      var body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { responseModalities: ['IMAGE', 'TEXT'] } });
+      var res; try { res = await postAuth(models[i], body, true); } catch (e) { lastErr = 'Network error'; continue; }
+      var j = null; try { j = await res.json(); } catch (e) {}
+      if (!res.ok) { lastErr = (j && j.error && j.error.message) || ('HTTP ' + res.status); continue; }
+      var parts = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts || [];
+      for (var k = 0; k < parts.length; k++) { var d = parts[k].inlineData || parts[k].inline_data; if (d && d.data) return 'data:' + (d.mimeType || d.mime_type || 'image/png') + ';base64,' + d.data; }
+      lastErr = 'Model ne image nahi di';
+    }
+    throw new Error(lastErr || 'Image nahi bani');
+  }
+  async function aiImageInto(host, prompt) {
+    var box = document.createElement('div'); box.className = 'fgc';
+    box.innerHTML = '<div class="ffl" style="cursor:default"><span class="dots"><i></i><i></i><i></i></span> AI image ban rahi hai…</div>';
+    host.appendChild(box); scrollEnd();
+    try {
+      var src = await genImage(prompt);
+      var f = { id: 'ai-image', f: src, ti: 'AI image (Gemini)' };
+      box.innerHTML = '<img alt="AI image" src="' + src + '" data-a="zoom"><div class="fcap">🎨 AI-generated image</div><div class="fsub">AI ki banayi image mein labels/spelling galat ho sakte hain. Exam ke liye PDF wala figure sahi hai.</div><div class="fbt"><button type="button" data-a="zoom">⤢ Bada dekho / Save</button></div>';
+      box.addEventListener('click', function (e) { if (e.target.getAttribute && e.target.getAttribute('data-a') === 'zoom') figZoom(f); });
+    } catch (e) {
+      var m = String(e && e.message || e);
+      box.innerHTML = '<div class="ffl" style="cursor:default">Image generate nahi hui.<small>' + figEsc(/quota|billing|limit|exceed|RESOURCE|permission|not found|not supported/i.test(m) ? 'Tumhari Gemini key par image model chalu nahi hai (free key par aksar band hota hai, billing chahiye). PDF wala figure ya SVG diagram use karo.' : m.slice(0, 160)) + '</small></div>';
+    }
+    scrollEnd();
+  }
+
+  var SIM_EX = 'osmosis and diffusion, enzyme action, photosynthesis limiting factors, cardiac cycle and ECG, nerve impulse, Hardy-Weinberg, DNA structure';
+  SIM_LIB.push({
+    key: 'osmosis', title: '2D · Osmosis and diffusion', re: /osmosis|diffusion|semi.?permeable|water potential|plasmolysis|turgid|flaccid|solute|endosmosis|exosmosis|passive transport/,
+    desc: 'osmosis through a semi-permeable membrane with solute sliders', note: 'Water (blue) crosses the semi-permeable membrane, solute (orange) cannot. Net movement of water is from lower solute concentration (higher water potential) to higher solute concentration (lower water potential).',
+    fn: function () {
+      sl('L', 'Solute on LEFT', 0, 40, 5, 1); sl('R', 'Solute on RIGHT', 0, 40, 25, 1);
+      var wt = [], so = [];
+      function rnd(a, b) { return a + Math.random() * (b - a); }
+      function rst() {
+        wt = []; so = []; var i;
+        for (i = 0; i < 60; i++) wt.push({ x: rnd(10, 45) / 100 * (i % 2 ? 1 : 1), y: rnd(8, 92) / 100, vx: rnd(-1, 1), vy: rnd(-1, 1), s: i < 30 ? 0 : 1 });
+        wt.forEach(function (p, i) { p.s = i < 30 ? 0 : 1; p.x = p.s ? rnd(55, 95) / 100 : rnd(5, 45) / 100; });
+        for (i = 0; i < P.L; i++) so.push({ x: rnd(5, 45) / 100, y: rnd(8, 92) / 100, vx: rnd(-1, 1), vy: rnd(-1, 1), s: 0 });
+        for (i = 0; i < P.R; i++) so.push({ x: rnd(55, 95) / 100, y: rnd(8, 92) / 100, vx: rnd(-1, 1), vy: rnd(-1, 1), s: 1 });
+      }
+      play({
+        setup: rst, reset: rst, change: rst,
+        step: function (dt) {
+          var bias = (P.R - P.L) / 40;
+          wt.forEach(function (p) {
+            p.vx += rnd(-1, 1) * 0.3; p.vy += rnd(-1, 1) * 0.3; var sp = Math.hypot(p.vx, p.vy) || 1; p.vx = p.vx / sp * 0.12; p.vy = p.vy / sp * 0.12;
+            var nx = p.x + p.vx * dt * 3, ny = p.y + p.vy * dt * 3; if (ny < 0.03 || ny > 0.97) { p.vy *= -1; ny = p.y; }
+            var cross = (p.x < 0.5) !== (nx < 0.5);
+            if (cross) { var go = (p.x < 0.5) ? (bias > 0 ? 1 : Math.max(0.05, 0.5 + bias * 0.9)) : (bias < 0 ? 1 : Math.max(0.05, 0.5 - bias * 0.9)); if (Math.random() > go + 0.0) { p.vx *= -1; nx = p.x; } else { p.s = nx < 0.5 ? 0 : 1; } }
+            if (nx < 0.02 || nx > 0.98) { p.vx *= -1; nx = p.x; } p.x = nx; p.y = ny;
+          });
+          so.forEach(function (p) {
+            p.vx += rnd(-1, 1) * 0.2; p.vy += rnd(-1, 1) * 0.2; var sp = Math.hypot(p.vx, p.vy) || 1; p.vx = p.vx / sp * 0.08; p.vy = p.vy / sp * 0.08;
+            var nx = p.x + p.vx * dt * 3, ny = p.y + p.vy * dt * 3; if (ny < 0.03 || ny > 0.97) { p.vy *= -1; ny = p.y; }
+            var lo = p.s ? 0.52 : 0.02, hi = p.s ? 0.98 : 0.48; if (nx < lo || nx > hi) { p.vx *= -1; nx = p.x; } p.x = nx; p.y = ny;
+          });
+        },
+        draw: function () {
+          var l = 10, t = 50, w = W - 20, h = H - 100, i; g.strokeStyle = '#64748b'; g.strokeRect(l, t, w, h);
+          g.setLineDash([6, 5]); g.strokeStyle = '#a78bfa'; g.lineWidth = 3; g.beginPath(); g.moveTo(l + w / 2, t); g.lineTo(l + w / 2, t + h); g.stroke(); g.setLineDash([]); g.lineWidth = 1;
+          g.fillStyle = '#38bdf8'; wt.forEach(function (p) { g.beginPath(); g.arc(l + p.x * w, t + p.y * h, 3.2, 0, 7); g.fill(); });
+          g.fillStyle = '#f97316'; so.forEach(function (p) { g.beginPath(); g.arc(l + p.x * w, t + p.y * h, 5.5, 0, 7); g.fill(); });
+          var nl = wt.filter(function (p) { return p.x < 0.5; }).length, nr = wt.length - nl;
+          txt('Water molecules: left ' + nl + '  |  right ' + nr, 12, 20, '#e2e8f0', 13);
+          txt(P.R > P.L ? 'Water moves LEFT → RIGHT (towards higher solute concentration)' : (P.R < P.L ? 'Water moves RIGHT → LEFT (towards higher solute concentration)' : 'Equal solute: no net movement (isotonic)'), 12, 38, '#94a3b8', 12);
+          txt('semi-permeable membrane', l + w / 2, t + h + 18, '#a78bfa', 11, 'center'); txt('Solute left: ' + P.L + '   right: ' + P.R, 12, H - 8, '#94a3b8', 11);
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'enzyme', title: '2D · Enzyme action (rate graph)', re: /enzyme|michaelis|\bkm\b|vmax|substrate|inhibit|competitive|optimum (temperature|ph)|active site|denatur/,
+    desc: 'enzyme rate vs substrate, with inhibitor, temperature and pH', note: 'v = Vmax[S]/(Km+[S]). A competitive inhibitor raises the apparent Km but leaves Vmax unchanged (more substrate overcomes it). Rate is highest at the optimum temperature (~37 °C) and pH; away from it the enzyme denatures.',
+    fn: function () {
+      sl('Km', 'Km', 1, 20, 5, 1); sl('I', 'Competitive inhibitor', 0, 20, 0, 1); sl('T', 'Temperature', 0, 70, 37, 1, ' °C'); sl('pH', 'pH', 1, 13, 7, 0.1);
+      function fac() { var ft = P.T <= 37 ? Math.exp(-Math.pow((37 - P.T) / 22, 2)) : Math.exp(-Math.pow((P.T - 37) / 9, 2)), fp = Math.exp(-Math.pow((P.pH - 7) / 2.2, 2)); return ft * fp; }
+      function rate(S) { var Vm = 100 * fac(), Ka = P.Km * (1 + P.I / 5); return Vm * S / (Ka + S); }
+      play({
+        draw: function (t) {
+          var l = 46, b = H - 40, w = W - l - 14, h = b - 36, i; g.strokeStyle = '#64748b'; g.beginPath(); g.moveTo(l, 30); g.lineTo(l, b); g.lineTo(l + w, b); g.stroke();
+          txt('[S] →', l + w - 34, b + 16, '#94a3b8', 11); txt('Rate v', 4, 28, '#94a3b8', 11); txt('Vmax', 8, 48, '#475569', 10);
+          g.strokeStyle = '#475569'; g.setLineDash([3, 4]); g.beginPath(); g.moveTo(l, 36); g.lineTo(l + w, 36); g.stroke(); g.setLineDash([]);
+          g.strokeStyle = '#22c55e'; g.lineWidth = 3; g.beginPath(); for (i = 0; i <= 100; i++) { var S = i / 100 * 100, X = l + w * i / 100, Y = b - rate(S) / 100 * h; if (i) g.lineTo(X, Y); else g.moveTo(X, Y); } g.stroke(); g.lineWidth = 1;
+          var S0 = 50 + 50 * Math.sin(t * 0.8), X0 = l + w * S0 / 100, Y0 = b - rate(S0) / 100 * h; g.fillStyle = '#f97316'; g.beginPath(); g.arc(X0, Y0, 7, 0, 7); g.fill();
+          g.strokeStyle = '#f97316'; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(X0, b); g.lineTo(X0, Y0); g.lineTo(l, Y0); g.stroke(); g.setLineDash([]);
+          txt('[S] = ' + S0.toFixed(0) + '   v = ' + rate(S0).toFixed(1) + '   activity factor = ' + (fac() * 100).toFixed(0) + '%', 12, 18, '#e2e8f0', 12);
+          if (fac() < 0.15) txt('Enzyme mostly denatured / inactive here', l + 10, 70, '#ef4444', 13);
+          g.fillStyle = '#1e293b'; g.fillRect(l + w - 150, 50, 140, 52); g.fillStyle = '#38bdf8'; g.beginPath(); g.arc(l + w - 120, 78, 14, 0.5, 5.8); g.lineTo(l + w - 120, 78); g.fill(); g.fillStyle = '#f97316'; g.fillRect(l + w - 98 + (Math.sin(t * 3) + 1) * 4, 70, 16, 16); txt('enzyme + substrate', l + w - 140, 96, '#94a3b8', 10);
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'photosyn', title: '2D · Photosynthesis limiting factors', re: /photosynthes|limiting factor|blackman|light intensity|co2 concentration|light saturation|compensation point|c3|c4/,
+    desc: 'rate of photosynthesis vs light, CO2 and temperature', note: "Blackman's law of limiting factors: the rate is controlled by the factor that is in shortest supply. Raising light helps only until CO₂ or temperature becomes limiting. C₃ plants saturate at ~25–30 °C and low CO₂.",
+    fn: function () {
+      sl('L', 'Light intensity', 0, 100, 40, 1, '%'); sl('CO', 'CO₂ level', 0.02, 0.15, 0.04, 0.01, '%'); sl('Tm', 'Temperature', 5, 45, 25, 1, ' °C');
+      function pm() { var tf = Math.exp(-Math.pow((P.Tm - 28) / 11, 2)); return 100 * (P.CO / (P.CO + 0.04)) * tf * 1.3; }
+      function rate(L) { var pmax = pm(); return Math.min(pmax, 100 * L / 100 * 1.2 * (L > 0 ? 1 : 0)); }
+      var bub = [];
+      play({
+        draw: function (t, dt) {
+          var l = 46, b = H - 36, w = W - l - 14, h = b - 80, i; g.strokeStyle = '#64748b'; g.beginPath(); g.moveTo(l, 60); g.lineTo(l, b); g.lineTo(l + w, b); g.stroke();
+          txt('Light intensity →', l + w - 96, b + 16, '#94a3b8', 11); txt('Rate', 8, 70, '#94a3b8', 11);
+          g.strokeStyle = '#22c55e'; g.lineWidth = 3; g.beginPath(); for (i = 0; i <= 100; i++) { var X = l + w * i / 100, Y = b - rate(i) / 120 * h; if (i) g.lineTo(X, Y); else g.moveTo(X, Y); } g.stroke(); g.lineWidth = 1;
+          var r = rate(P.L), X0 = l + w * P.L / 100, Y0 = b - r / 120 * h; g.fillStyle = '#f97316'; g.beginPath(); g.arc(X0, Y0, 7, 0, 7); g.fill();
+          var lim = r >= pm() - 0.01 ? (P.CO / (P.CO + 0.04) < Math.exp(-Math.pow((P.Tm - 28) / 11, 2)) ? 'CO₂' : 'temperature') : 'light';
+          txt('Rate = ' + r.toFixed(0) + '   limiting factor now: ' + lim, 12, 18, '#e2e8f0', 13);
+          txt(lim === 'light' ? 'Increase light → rate rises' : 'More light will NOT help — raise ' + lim, 12, 38, '#94a3b8', 12);
+          if (Math.random() < r / 120 * 0.6) bub.push({ x: 80 + Math.random() * 60, y: 0, v: 0.6 + Math.random() }); bub = bub.filter(function (q) { q.y += q.v; return q.y < 50; });
+          g.fillStyle = '#16a34a'; g.fillRect(l + w - 110, 62, 8, 56); g.beginPath(); g.ellipse(l + w - 84, 70, 26, 12, -0.5, 0, 7); g.fill(); g.beginPath(); g.ellipse(l + w - 128, 86, 22, 10, 0.5, 0, 7); g.fill();
+          g.fillStyle = 'rgba(147,197,253,.8)'; bub.forEach(function (q) { g.beginPath(); g.arc(l + w - 110 + q.x % 30 - 15, 120 - q.y, 2.5, 0, 7); g.fill(); }); txt('O₂ bubbles', l + w - 150, 134, '#94a3b8', 10);
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'ecg', title: '2D · Cardiac cycle and ECG', re: /ecg|cardiac|heart ?beat|heart rate|cardiac output|stroke volume|pulse|systole|diastole|double circulation|heart\b/,
+    desc: 'beating heart with ECG trace and heart-rate slider', note: 'P wave = atrial depolarisation, QRS = ventricular depolarisation (ventricular systole begins), T wave = ventricular repolarisation. One cardiac cycle ≈ 0.8 s at 72 beats/min. Cardiac output = stroke volume × heart rate.',
+    fn: function () {
+      sl('hr', 'Heart rate', 40, 160, 72, 1, ' bpm'); sl('sv', 'Stroke volume', 40, 100, 70, 1, ' mL');
+      function g2(x, m, s, a) { return a * Math.exp(-Math.pow((x - m) / s, 2)); }
+      function ecg(ph) { return g2(ph, 0.12, 0.035, 0.15) + g2(ph, 0.27, 0.012, -0.12) + g2(ph, 0.3, 0.014, 1) + g2(ph, 0.33, 0.012, -0.25) + g2(ph, 0.55, 0.05, 0.3); }
+      var ph = 0;
+      play({
+        step: function (dt) { ph += dt * P.hr / 60; },
+        draw: function (t) {
+          var cy = 72, cx = W / 2, f = ph % 1, sys = f > 0.3 && f < 0.62, atr = f > 0.1 && f < 0.3, k = sys ? 0.86 : 1, ka = atr ? 0.88 : 1;
+          g.fillStyle = '#7f1d1d'; g.beginPath(); g.ellipse(cx - 28, cy - 18, 24 * ka, 20 * ka, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(cx + 28, cy - 18, 24 * ka, 20 * ka, 0, 0, 7); g.fill();
+          g.fillStyle = '#dc2626'; g.beginPath(); g.ellipse(cx - 28, cy + 24, 26 * k, 34 * k, 0.1, 0, 7); g.fill(); g.beginPath(); g.ellipse(cx + 28, cy + 24, 26 * k, 34 * k, -0.1, 0, 7); g.fill();
+          txt('RA', cx - 38, cy - 14, '#fff', 11); txt('LA', cx + 20, cy - 14, '#fff', 11); txt('RV', cx - 38, cy + 28, '#fff', 11); txt('LV', cx + 20, cy + 28, '#fff', 11);
+          var gy = 150, gh = H - gy - 28; g.strokeStyle = '#334155'; for (var i = 0; i < 6; i++) { g.beginPath(); g.moveTo(10, gy + gh * i / 5); g.lineTo(W - 10, gy + gh * i / 5); g.stroke(); }
+          g.strokeStyle = '#22c55e'; g.lineWidth = 2; g.beginPath(); var span = 3;
+          for (var j = 0; j <= 300; j++) { var q = ph - span + span * j / 300, pf = q - Math.floor(q), X = 10 + (W - 20) * j / 300, Y = gy + gh * 0.75 - ecg(pf) * gh * 0.65; if (j) g.lineTo(X, Y); else g.moveTo(X, Y); } g.stroke(); g.lineWidth = 1;
+          txt(sys ? 'Ventricular systole (QRS → T)' : (atr ? 'Atrial systole (P wave)' : 'Joint diastole'), 12, 18, '#e2e8f0', 13);
+          txt('Cycle = ' + (60 / P.hr).toFixed(2) + ' s   Cardiac output = ' + (P.hr * P.sv / 1000).toFixed(2) + ' L/min', 12, 36, '#94a3b8', 12); txt('P', W - 70, gy + gh + 14, '#94a3b8', 10); txt('QRS', W - 50, gy + gh + 14, '#94a3b8', 10); txt('T', W - 20, gy + gh + 14, '#94a3b8', 10);
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'neuron', title: '2D · Nerve impulse (action potential)', re: /action potential|nerve impulse|neuron|resting potential|depolari[sz]|repolari[sz]|threshold|synapse|sodium.?potassium pump|membrane potential/,
+    desc: 'action potential with stimulus strength slider', note: 'Resting potential ≈ −70 mV (more Na⁺ outside, K⁺ inside). A stimulus reaching threshold (≈ −55 mV) opens Na⁺ channels → depolarisation (+30 mV), then K⁺ channels → repolarisation, then a brief hyperpolarisation. Below threshold: no impulse (all-or-none law).',
+    fn: function () {
+      sl('s', 'Stimulus strength', 5, 40, 25, 1, ' mV'); sl('per', 'Stimulus every', 2, 6, 3, 0.5, ' s');
+      function ap(t) { if (t < 0) return -70; if (P.s < 15) return -70 + (t < 0.3 ? P.s * Math.exp(-t * 9) : P.s * Math.exp(-t * 9)); if (t < 0.15) return -70 + 15 * t / 0.15; if (t < 0.45) return -55 + 85 * Math.pow((t - 0.15) / 0.3, 0.9); if (t < 0.9) return 30 - 110 * Math.pow((t - 0.45) / 0.45, 0.8); if (t < 1.5) return -80 + 10 * (t - 0.9) / 0.6; return -70; }
+      play({
+        draw: function (t) {
+          var l = 50, b = H - 30, w = W - l - 12, top = 40, h = b - top, span = 6, i; function Y(v) { return top + (30 - v) / 110 * h; }
+          g.strokeStyle = '#64748b'; g.beginPath(); g.moveTo(l, top); g.lineTo(l, b); g.stroke();
+          [30, 0, -55, -70, -80].forEach(function (v) { g.strokeStyle = v === -55 ? '#ef4444' : '#334155'; g.setLineDash(v === -55 ? [5, 4] : []); g.beginPath(); g.moveTo(l, Y(v)); g.lineTo(l + w, Y(v)); g.stroke(); g.setLineDash([]); txt(v + '', 4, Y(v) + 4, v === -55 ? '#ef4444' : '#94a3b8', 10); });
+          txt('threshold', l + w - 54, Y(-55) - 4, '#ef4444', 10);
+          g.strokeStyle = '#22c55e'; g.lineWidth = 3; g.beginPath(); for (i = 0; i <= 300; i++) { var q = t - span + span * i / 300, ph = ((q % P.per) + P.per) % P.per, v = q < 0 ? -70 : ap(ph), X = l + w * i / 300; if (i) g.lineTo(X, Y(v)); else g.moveTo(X, Y(v)); } g.stroke(); g.lineWidth = 1;
+          var ph2 = t % P.per, v0 = ap(ph2); txt('Membrane potential = ' + v0.toFixed(0) + ' mV', 12, 18, '#e2e8f0', 13);
+          txt(P.s < 15 ? 'Sub-threshold stimulus → NO action potential' : (ph2 < 0.15 ? 'Stimulus reached threshold' : ph2 < 0.45 ? 'Depolarisation: Na⁺ rushes IN' : ph2 < 0.9 ? 'Repolarisation: K⁺ moves OUT' : ph2 < 1.5 ? 'Hyperpolarisation, then Na⁺/K⁺ pump restores −70 mV' : 'Resting state (−70 mV)'), 12, 36, '#94a3b8', 12);
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'hardy', title: '2D · Hardy–Weinberg equilibrium', re: /hardy|weinberg|allele frequenc|gene pool|genetic equilibrium|p\s*\+\s*q|p2|genotype frequenc/,
+    desc: 'Hardy-Weinberg p, q and genotype frequencies', note: 'p + q = 1 and p² + 2pq + q² = 1. Allele frequencies stay constant from generation to generation if there is no selection, mutation, migration, drift, and mating is random.',
+    fn: function () {
+      sl('p', 'Frequency of A (p)', 0, 1, 0.6, 0.01);
+      var pop = [];
+      function mk() { pop = []; var p = P.p, q = 1 - p; for (var i = 0; i < 100; i++) { var r = Math.random(); pop.push(r < p * p ? 0 : (r < p * p + 2 * p * q ? 1 : 2)); } pop.sort(); }
+      play({
+        setup: mk, change: mk, reset: mk,
+        draw: function () {
+          var p = P.p, q = 1 - p, vals = [p * p, 2 * p * q, q * q], nm = ['AA  p²', 'Aa  2pq', 'aa  q²'], col = ['#38bdf8', '#a78bfa', '#f97316'], bw = (W - 40) / 3, bh = H * 0.35, i;
+          for (i = 0; i < 3; i++) { var x = 20 + i * bw + 8, hh = vals[i] * bh; g.fillStyle = col[i]; g.fillRect(x, 70 + bh - hh, bw - 16, hh); txt((vals[i] * 100).toFixed(0) + '%', x + (bw - 16) / 2, 66 + bh - hh, '#e2e8f0', 13, 'center'); txt(nm[i], x + (bw - 16) / 2, 90 + bh, '#e2e8f0', 12, 'center'); }
+          txt('p = ' + p.toFixed(2) + '  q = ' + q.toFixed(2) + '   p² + 2pq + q² = ' + (vals[0] + vals[1] + vals[2]).toFixed(2), 12, 20, '#e2e8f0', 13);
+          txt('A population of 100 random-mating individuals:', 12, 112 + bh, '#94a3b8', 11);
+          for (i = 0; i < 100; i++) { var cx = 20 + (i % 25) * ((W - 40) / 25) + 6, cy = 130 + bh + Math.floor(i / 25) * 22; g.fillStyle = col[pop[i]]; g.beginPath(); g.arc(cx, cy, 6, 0, 7); g.fill(); }
+        }
+      });
+    }
+  });
+  SIM_LIB.push({
+    key: 'dna3d', title: '3D · DNA double helix', d3: true, re: /\bdna\b|double helix|base pair|watson|nucleotide|chargaff|helix|nucleic acid/,
+    desc: 'rotating 3D DNA double helix with base pairs (drag to rotate)', note: 'Two antiparallel polynucleotide strands wound as a right-handed helix. A pairs with T (2 hydrogen bonds), G pairs with C (3 hydrogen bonds). One turn = 10 base pairs = 34 Å; distance between base pairs = 3.4 Å.',
+    fn: function () {
+      sl('turns', 'Number of turns', 1, 4, 2, 0.5); sl('spin', 'Auto-rotate', 0, 2, 0.6, 0.1);
+      var seq = []; for (var k = 0; k < 40; k++) seq.push(Math.random() < 0.5 ? (Math.random() < 0.5 ? 0 : 1) : (Math.random() < 0.5 ? 2 : 3));
+      var pairs = [['A', 'T', '#f97316', '#38bdf8'], ['T', 'A', '#38bdf8', '#f97316'], ['G', 'C', '#22c55e', '#e879f9'], ['C', 'G', '#e879f9', '#22c55e']];
+      play({
+        step: function (dt) { yaw += dt * P.spin; },
+        draw: function () {
+          var n = Math.round(P.turns * 10), i, H3 = 2.2, items = [], R = 0.55;
+          for (i = 0; i <= n; i++) {
+            var a = i / 10 * 2 * Math.PI, y = (i / n - 0.5) * H3, p1 = pr(R * Math.cos(a), y, R * Math.sin(a)), p2 = pr(R * Math.cos(a + Math.PI), y, R * Math.sin(a + Math.PI)), pm = pairs[seq[i % seq.length]];
+            items.push({ z: p1[2], t: 'b', a: p1, b: p2, pm: pm, i: i });
+          }
+          var pts = [[], []]; for (i = 0; i <= n * 4; i++) { var a2 = i / 40 * 2 * Math.PI, y2 = (i / (n * 4) - 0.5) * H3; pts[0].push(pr(R * Math.cos(a2), y2, R * Math.sin(a2))); pts[1].push(pr(R * Math.cos(a2 + Math.PI), y2, R * Math.sin(a2 + Math.PI))); }
+          [0, 1].forEach(function (s) { g.strokeStyle = s ? '#fbbf24' : '#94a3b8'; g.lineWidth = 4; g.beginPath(); pts[s].forEach(function (p, j) { if (j) g.lineTo(p[0], p[1]); else g.moveTo(p[0], p[1]); }); g.stroke(); });
+          g.lineWidth = 1;
+          items.forEach(function (it) {
+            var m = [(it.a[0] + it.b[0]) / 2, (it.a[1] + it.b[1]) / 2]; g.lineWidth = 5; g.strokeStyle = it.pm[2]; g.beginPath(); g.moveTo(it.a[0], it.a[1]); g.lineTo(m[0], m[1]); g.stroke(); g.strokeStyle = it.pm[3]; g.beginPath(); g.moveTo(m[0], m[1]); g.lineTo(it.b[0], it.b[1]); g.stroke();
+            if (n <= 25) { txt(it.pm[0], it.a[0] - 4, it.a[1] - 6, '#fff', 10); txt(it.pm[1], it.b[0] - 4, it.b[1] - 6, '#fff', 10); }
+          }); g.lineWidth = 1;
+          txt('A–T: 2 H-bonds   G–C: 3 H-bonds   |   ' + n + ' bp = ' + (n * 3.4).toFixed(0) + ' Å', 12, 20, '#e2e8f0', 12); txt('drag to rotate 3D view', 12, H - 12, '#94a3b8', 11);
+        }
+      });
+    }
+  });
 
   function friendly(e) {
     if (e instanceof GErr) {
@@ -1423,13 +1738,13 @@
   }
   function gemParts(j) { var c = j && j.candidates && j.candidates[0], p = c && c.content && c.content.parts || [], t = ''; p.forEach(function (x) { if (x.text && !x.thought) t += x.text; }); return t; }
   /* New AQ. keys: try Bearer, ?key= and Vertex until Google accepts one (the winner is remembered) */
-  async function postAuth(model, body) {
+  async function postAuth(model, body, gen) {
     var enc = encodeURIComponent, json = { 'Content-Type': 'application/json' };
-    var gl = 'https://generativelanguage.googleapis.com/v1beta/models/' + enc(model) + ':streamGenerateContent?alt=sse';
+    var gl = 'https://generativelanguage.googleapis.com/v1beta/models/' + enc(model) + (gen ? ':generateContent' : ':streamGenerateContent?alt=sse');
     function req(kind) {
       if (kind === 'bearer') return [gl, { 'Content-Type': 'application/json', Authorization: 'Bearer ' + S.key }];
-      if (kind === 'query') return [gl + '&key=' + enc(S.key), json];
-      if (kind === 'vertex') return ['https://aiplatform.googleapis.com/v1/publishers/google/models/' + enc(model) + ':streamGenerateContent?alt=sse&key=' + enc(S.key), json];
+      if (kind === 'query') return [gl + (gen ? '?key=' : '&key=') + enc(S.key), json];
+      if (kind === 'vertex') return ['https://aiplatform.googleapis.com/v1/publishers/google/models/' + enc(model) + (gen ? ':generateContent?key=' : ':streamGenerateContent?alt=sse&key=') + enc(S.key), json];
       return [gl, { 'Content-Type': 'application/json', 'x-goog-api-key': S.key }];
     }
     var aq = isVertexKey(), kinds = aq ? ['bearer', 'query', 'vertex'] : ['header'], mem = load('bio_ai_auth', null);
@@ -1576,11 +1891,11 @@
     var bubble = addMsg('ai', ''); bubble.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>'; scrollEnd();
     var docs = search(q, ch, engine === 'gemini' ? 6 : 2);
     var onText = function (t) { bubble.innerHTML = md(figSplit(t, true).text); scrollEnd(); };
-    var fcand = figSearch(q, ch, 8), gfig = [];
+    var fcand = figSearch(q, ch, 8), gfig = [], imgReq = wantsImgGen(q);
     var label = '', answer = '', err = null;
     try {
       if (engine === 'gemini') {
-        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)') + figPrompt(fcand);
+        var sys = RULES + '\n\nBOOK CONTEXT:\n' + (buildContext(docs, 9000) || '(none)') + figPrompt(fcand) + simPrompt() + (imgReq ? '\n\nIMAGE: the app itself will generate an AI image for this request, so do NOT draw an SVG or write image code; give only a short explanation (and a [[FIG:id]] marker if a PDF figure matches).' : '');
         var past = [], hs = history.slice(0, -1);
         for (var hi = 0; hi + 1 < hs.length; hi++) { if (hs[hi].role === 'user' && hs[hi + 1].role === 'ai' && !hs[hi + 1].err) { past.push(hs[hi], hs[hi + 1]); hi++; } }
         past = past.slice(-6);
@@ -1592,7 +1907,14 @@
       }
       if (engine === 'device') { label = 'Gemma · on-device'; answer = await askGemma(q, buildContext(docs, 2400), onText); }
       if (engine === 'device' && wantsFig(q) && fcand.length && fcand[0].sc >= 6) answer += '\n[[FIG:' + fcand[0].f.id + ']]';
-      var fsp = figSplit(answer); bubble.innerHTML = md(fsp.text, true); figAttach(bubble, fsp.ids, wantsFlash(q)); addMeta(bubble, label, docs);
+      if (!/\[\[SIM:|```sim/.test(answer)) {
+        var sm = simFind(q);
+        if (sm && (engine === 'device' || wantsSim(q))) answer += '\n[[SIM:' + sm.key + ']]';
+        else if (!sm && engine === 'device' && wantsSim(q)) answer += '\n\n' + simMissing();
+      }
+      var fsp = figSplit(answer); bubble.innerHTML = md(fsp.text, true); figAttach(bubble, fsp.ids, wantsFlash(q)); simAttach(bubble, fsp.sims);
+      if (imgReq && engine === 'gemini') aiImageInto(bubble, q + '. Clean, colourful, well-labelled educational illustration for a Class 11 NCERT / NEET student. English labels, white background.');
+      addMeta(bubble, label, docs);
       history.push({ role: 'ai', text: answer, engine: label, docs: docs.slice(0, 3).map(function (d) { return { ch: d.ch, title: d.title }; }) });
     } catch (e) {
       err = friendly(e); bubble.className = 'msg ai err'; bubble.innerHTML = md(err);
@@ -1635,6 +1957,7 @@
     }).catch(function () {});
   }
   chatEl.addEventListener('click', dgClick);
+  chatEl.addEventListener('click', simClick);
   renderAll(); updateStatus();
 })();
 </script>
