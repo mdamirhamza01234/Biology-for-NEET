@@ -308,6 +308,18 @@
   .dots { display: inline-flex; gap: 5px; padding: 4px 2px; }
   .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: bounce 1s infinite ease-in-out; }
   .dots i:nth-child(2) { animation-delay: .15s; } .dots i:nth-child(3) { animation-delay: .3s; }
+  .dgm { margin: 10px 0; border-radius: 14px; overflow: hidden; background: #f8fafc; border: 1px solid rgba(148,163,184,.45); }
+  .dgm svg { display: block; width: 100%; height: auto; color: #0f172a; fill: #000; stroke: none; stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }
+  .dgb { display: flex; gap: 6px; justify-content: flex-end; padding: 6px; background: #e2e8f0; }
+  .dgb button, .dgo button { border: 0; border-radius: 9px; padding: 7px 11px; font: 600 12px system-ui, sans-serif; background: #0f766e; color: #fff; }
+  .dgp { margin: 10px 0; padding: 14px; border-radius: 12px; border: 1px dashed rgba(148,163,184,.55); font-size: .9em; display: flex; gap: 10px; align-items: center; }
+  .cb { overflow-x: auto; background: rgba(0,0,0,.35); padding: 8px 10px; border-radius: 10px; font-size: .82em; white-space: pre; margin: 8px 0; }
+  .dgo { position: fixed; inset: 0; z-index: 400; background: rgba(2,6,23,.94); display: flex; flex-direction: column; }
+  .dgo .bar { display: flex; gap: 8px; align-items: center; justify-content: flex-end; padding: 10px; padding-top: max(10px, env(safe-area-inset-top)); }
+  .dgo .bar span { flex: 1; color: #cbd5e1; font: 600 13px system-ui, sans-serif; }
+  .dgo .bd { flex: 1; overflow: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
+  .dgo .bd .pg { background: #f8fafc; border-radius: 12px; margin: 0 auto; }
+  .dgo .bd svg { display: block; width: 100%; height: auto; color: #0f172a; fill: #000; stroke: none; stroke-width: 1; stroke-linecap: butt; stroke-linejoin: miter; }
   @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-5px); opacity: 1; } }
   .suggest { display: flex; flex-wrap: wrap; gap: 8px; margin: 2px 0 8px; }
   .suggest button { padding: 9px 13px; border-radius: 999px; font-size: 13px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); color: #c9d7f0; text-align: left; transition: transform .12s, border-color .2s; }
@@ -1088,8 +1100,84 @@
   }
   function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function inline(s) { s = chemText(s); return s.replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/(^|[^*\w])\*([^*\n]+?)\*(?![*\w])/g, '$1<i>$2</i>'); }
-  function md(src) {
-    var store = [], lines = extractMath(esc(String(src).replace(/\r/g, '')), store).split('\n'), out = [], list = null, para = [], m;
+  /* ---------- diagrams: ```svg blocks -> picture (sanitised), code blocks ---------- */
+  function cleanSvg(raw) {
+    try {
+      raw = raw.replace(/&(?!#?\w+;)/g, '&amp;');
+      var doc = new DOMParser().parseFromString(raw, 'image/svg+xml'), svg = doc.documentElement;
+      if (!svg || String(svg.nodeName).toLowerCase() !== 'svg' || doc.getElementsByTagName('parsererror').length) return null;
+      var bad = svg.querySelectorAll('script,foreignObject,iframe,object,embed,image,audio,video,set,animate,animateTransform,animateMotion'), i, j;
+      for (i = 0; i < bad.length; i++) if (bad[i].parentNode) bad[i].parentNode.removeChild(bad[i]);
+      var lk = svg.querySelectorAll('a');
+      for (i = 0; i < lk.length; i++) { var pa = lk[i].parentNode; if (!pa) continue; while (lk[i].firstChild) pa.insertBefore(lk[i].firstChild, lk[i]); pa.removeChild(lk[i]); }
+      var sty = svg.querySelectorAll('style');
+      for (i = 0; i < sty.length; i++) if (/@import|url\s*\(\s*['"]?(?!#)/i.test(sty[i].textContent)) sty[i].parentNode.removeChild(sty[i]);
+      var all = [svg].concat([].slice.call(svg.querySelectorAll('*')));
+      for (i = 0; i < all.length; i++) {
+        var at = [].slice.call(all[i].attributes);
+        for (j = 0; j < at.length; j++) {
+          var nm = at[j].name.toLowerCase(), v = at[j].value;
+          if (nm.indexOf('on') === 0 || ((nm === 'href' || nm === 'xlink:href') && v.charAt(0) !== '#') || (/url\s*\(\s*['"]?(?!#)/i.test(v)) || /javascript:/i.test(v)) all[i].removeAttribute(at[j].name);
+        }
+      }
+      if (!svg.getAttribute('viewBox')) svg.setAttribute('viewBox', '0 0 ' + (parseFloat(svg.getAttribute('width')) || 360) + ' ' + (parseFloat(svg.getAttribute('height')) || 440));
+      svg.removeAttribute('width'); svg.removeAttribute('height');
+      svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet'); if (!svg.getAttribute('font-family')) svg.setAttribute('font-family', 'Roboto, "Segoe UI", Arial, Helvetica, sans-serif');
+      return new XMLSerializer().serializeToString(svg);
+    } catch (e) { return null; }
+  }
+  function codeBlock(lang, body, closed, done) {
+    lang = (lang || '').toLowerCase();
+    if (lang === 'svg' || (lang === 'xml' && /<svg[\s>]/i.test(body))) {
+      if (!closed) return '<div class="dgp">' + (done ? 'Diagram poora nahi aaya — dobara pucho (ya "chhota diagram" bolo).' : '<span class="dots"><i></i><i></i><i></i></span> Diagram ban raha hai…') + '</div>';
+      var c = cleanSvg(body.trim());
+      if (!c) return '<div class="dgp">Diagram sahi se nahi bana — dobara pucho.</div>';
+      return '<div class="dgm"><div class="dgb"><button type="button" data-dg="zoom">⤢ Bada dekho</button><button type="button" data-dg="save">⬇ Save</button></div>' + c + '</div>';
+    }
+    return '<pre class="cb"><code>' + esc(body) + '</code></pre>';
+  }
+  function dgPng(svgEl, name) {
+    var vb = (svgEl.getAttribute('viewBox') || '0 0 360 440').split(/[\s,]+/).map(Number), W = 1080, H = Math.round(W * (vb[3] || 440) / (vb[2] || 360));
+    var cl = svgEl.cloneNode(true); cl.setAttribute('width', W); cl.setAttribute('height', H);
+    var img = new Image();
+    img.onload = function () {
+      var c = document.createElement('canvas'); c.width = W; c.height = H;
+      var x = c.getContext('2d'); x.fillStyle = '#f8fafc'; x.fillRect(0, 0, W, H); x.drawImage(img, 0, 0, W, H);
+      c.toBlob(function (b) {
+        if (!b) { toast('Image nahi ban saki'); return; }
+        var f = null; try { f = new File([b], name + '.png', { type: 'image/png' }); } catch (e) {}
+        if (f && navigator.canShare && navigator.canShare({ files: [f] })) { navigator.share({ files: [f], title: name }).catch(function () {}); return; }
+        var a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name + '.png'; document.body.appendChild(a); a.click(); a.remove();
+        toast('Image save ho gayi (Downloads)');
+      }, 'image/png');
+    };
+    img.onerror = function () { toast('Image nahi ban saki'); };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(new XMLSerializer().serializeToString(cl));
+  }
+  function dgZoom(svgEl) {
+    var o = document.createElement('div'), z = 1; o.className = 'dgo';
+    o.innerHTML = '<div class="bar"><span>Diagram</span><button type="button" data-z="-">−</button><button type="button" data-z="+">+</button><button type="button" data-z="s">⬇ Save</button><button type="button" data-z="x">✕ Band</button></div><div class="bd"><div class="pg"></div></div>';
+    var pg = o.querySelector('.pg'); pg.appendChild(svgEl.cloneNode(true));
+    function fit() { pg.style.width = (z * 100) + '%'; }
+    o.addEventListener('click', function (e) {
+      var k = e.target.getAttribute && e.target.getAttribute('data-z'); if (!k) return;
+      if (k === 'x') o.remove(); else if (k === '+') { z = Math.min(4, z + .5); fit(); } else if (k === '-') { z = Math.max(1, z - .5); fit(); } else if (k === 's') dgPng(pg.firstChild, 'diagram');
+    });
+    document.body.appendChild(o);
+  }
+  function dgClick(e) {
+    var b = e.target.closest ? e.target.closest('[data-dg]') : null; if (!b) return;
+    var svg = b.closest('.dgm').querySelector('svg'); if (!svg) return;
+    if (b.getAttribute('data-dg') === 'zoom') dgZoom(svg); else dgPng(svg, 'diagram');
+  }
+  function md(src, done) {
+    var store = [];
+    function hold(h) { store.push(h); return '\n\u0001T' + (store.length - 1) + '\u0002\n'; }
+    src = String(src).replace(/\r/g, '')
+      .replace(/```[ \t]*([\w-]*)[ \t]*\n([\s\S]*?)\n?```/g, function (a, lang, body) { return hold(codeBlock(lang, body, true, done)); })
+      .replace(/```[ \t]*([\w-]*)[ \t]*\n([\s\S]*)$/, function (a, lang, body) { return hold(codeBlock(lang, body, false, done)); })
+      .replace(/<svg[\s\S]*?<\/svg>/gi, function (a) { return hold(codeBlock('svg', a, true, done)); });
+    var lines = extractMath(esc(src), store).split('\n'), out = [], list = null, para = [], m;
     function flushP() { if (para.length) { out.push('<p>' + inline(para.join('<br>')) + '</p>'); para = []; } }
     function closeL() { if (list) { out.push('</' + list + '>'); list = null; } }
     function res(h) { return h.replace(/\u0001(\d+)\u0002/g, function (x, k) { return store[+k]; }); }
@@ -1124,7 +1212,7 @@
     opts = opts || {};
     var el = document.createElement('div');
     el.className = 'msg ' + role + (opts.err ? ' err' : '');
-    if (role === 'user') el.textContent = text; else el.innerHTML = md(text);
+    if (role === 'user') el.textContent = text; else el.innerHTML = md(text, true);
     chatEl.appendChild(el);
     return el;
   }
@@ -1240,14 +1328,15 @@
   }
   function liveInfo() {
     var today = ''; try { today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { today = new Date().toDateString(); }
-    return '\n\nTODAY IS ' + today + ' (date on the student\'s phone). You have Google Search: for anything current or recent (exam dates, results, cut-offs, syllabus changes, news, latest-year papers) search first and trust the search results and today\'s date over your training memory. Never say a date is in the future or that you have no real-time data when it is on or before today; if search finds nothing, say so honestly. Never invent past-paper questions or claim a question came in a particular exam unless you found it by search or are certain. For comparisons or match-the-column use a Markdown table (header row, then a |---|---| row).';
+    return '\n\nTODAY IS ' + today + ' (date on the student\'s phone). You have Google Search: for anything current or recent (exam dates, results, cut-offs, syllabus changes, news, latest-year papers) search first and trust the search results and today\'s date over your training memory. Never say a date is in the future or that you have no real-time data when it is on or before today; if search finds nothing, say so honestly. Never invent past-paper questions or claim a question came in a particular exam unless you found it by search or are certain. For comparisons or match-the-column use a Markdown table (header row, then a |---|---| row).' +
+      '\n\nDIAGRAMS: when the student asks for a diagram, figure, chart, flowchart, graph, sketch or says draw/banao/digram, never use ASCII art. Reply with ONE complete, valid, self-contained SVG inside a ```svg fenced block, then the explanation in text below it. SVG rules: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 H"> with H between 380 and 620 (portrait, phone screen), no width/height attributes; first element a background <rect width="360" height="H" fill="#f8fafc"/>; a bold 15px title at the top; all text in English (NCERT terms), font-size 11-13, dark fill (#0f172a), centred inside its shape, long labels split over several <text> lines, no overlapping text or shapes; use soft pastel fills with darker strokes for boxes/organelles/structures, draw real shapes (ellipses, paths, membranes, curves, axes with ticks and units) instead of only boxes, and connect steps with arrows made with a <marker> arrowhead; show direction (light, electrons, products) clearly; scientifically follow the NCERT figure and omit a detail rather than invent it. Forbidden: <script>, <foreignObject>, <image>, external links or fonts, CSS @import, event attributes. Close every tag. Keep the SVG under about 6000 characters.';
   }
   async function callModel(model, sys, msgs, onText) {
     function mk(search) {
       var o = {
         systemInstruction: { parts: [{ text: sys + liveInfo() }] },
         contents: msgs.map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }; }),
-        generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
+        generationConfig: { temperature: 0.4, maxOutputTokens: 6144 }
       };
       if (search) o.tools = [{ google_search: {} }];
       return JSON.stringify(o);
@@ -1321,6 +1410,7 @@
     gSay('Gemma ready ✓', 'ok'); updateStatus();
   }
   var G_RULES = 'You are Biology AI, a Class 11 NCERT Biology (NEET) tutor. Answer in simple English, short and correct. Use only standard NCERT facts; never invent names, numbers or examples. Write chemical formulas in plain text using the letter O, never zero (C6H12O6, H2O, CO2), and give the full balanced equation with conditions on the arrow: 6CO2 + 12H2O ->[Light][Chlorophyll] C6H12O6 + 6H2O + 6O2. For other equations use dollar signs like $RQ = \\frac{CO_2}{O_2}$. Use bullet points starting with "- ". If the answer is not in the context, use your biology knowledge.';
+  G_RULES += ' If asked for a diagram, do not draw it: give a short numbered flow such as 1. A -> 2. B -> 3. C instead.';
   var BR = '(?:\\{(?:[^{}]|\\{(?:[^{}]|\\{[^{}]*\\})*\\})*\\})';
   var ATOM = '(?:\\\\[a-zA-Z]+' + BR + '*|[A-Za-z0-9]+(?:[_^](?:' + BR + '|\\w))+|[_^](?:' + BR + '|\\w))';
   var RUN_RE = new RegExp(ATOM + '(?:[ \\t]?(?:' + ATOM + '|[=+\\-*/()|<>]|(?:[A-Za-z]|\\d+(?:\\.\\d+)?)(?![A-Za-z])))*', 'g');
@@ -1380,7 +1470,7 @@
         }
       }
       if (engine === 'device') { label = 'Gemma · on-device'; answer = await askGemma(q, buildContext(docs, 2400), onText); }
-      bubble.innerHTML = md(answer); addMeta(bubble, label, docs);
+      bubble.innerHTML = md(answer, true); addMeta(bubble, label, docs);
       history.push({ role: 'ai', text: answer, engine: label, docs: docs.slice(0, 3).map(function (d) { return { ch: d.ch, title: d.title }; }) });
     } catch (e) {
       err = friendly(e); bubble.className = 'msg ai err'; bubble.innerHTML = md(err);
@@ -1422,6 +1512,7 @@
       if (st && st.hasModel) { gSay('Saved model mila. Load ho raha hai…'); nativeLoad(false).catch(function (e) { gSay(e && e.message ? e.message : 'Gemma load nahi hua.', 'bad'); }); }
     }).catch(function () {});
   }
+  chatEl.addEventListener('click', dgClick);
   renderAll(); updateStatus();
 })();
 </script>
