@@ -270,6 +270,10 @@
   .msg.ai { align-self: flex-start; background: var(--surface); border: 1px solid var(--line); border-bottom-left-radius: 6px; color: #dbe5f8; }
   .msg.ai.err { border-color: rgba(251,113,133,.45); background: rgba(251,113,133,.08); }
   .msg p { margin: 0 0 8px; } .msg p:last-child { margin-bottom: 0; }
+  .tw { overflow-x: auto; margin: 8px 0; -webkit-overflow-scrolling: touch; }
+  .msg table { border-collapse: collapse; width: 100%; font-size: .9em; line-height: 1.35; }
+  .msg th, .msg td { border: 1px solid rgba(127,127,127,.4); padding: 6px 8px; text-align: left; vertical-align: top; word-break: normal; overflow-wrap: normal; }
+  .msg th { background: rgba(127,127,127,.18); font-weight: 700; }
   .msg ul, .msg ol { margin: 4px 0 8px 20px; } .msg li { margin: 2px 0; }
   .msg b { color: #fff; }
   .msg code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13.5px; }
@@ -1088,8 +1092,25 @@
     var store = [], lines = extractMath(esc(String(src).replace(/\r/g, '')), store).split('\n'), out = [], list = null, para = [], m;
     function flushP() { if (para.length) { out.push('<p>' + inline(para.join('<br>')) + '</p>'); para = []; } }
     function closeL() { if (list) { out.push('</' + list + '>'); list = null; } }
+    function res(h) { return h.replace(/\u0001(\d+)\u0002/g, function (x, k) { return store[+k]; }); }
+    function cells(r) { r = r.trim().replace(/^\|/, '').replace(/\|$/, ''); return r.split('|').map(function (c) { return c.trim(); }); }
+    var TROW = /^\s*\|.*\|\s*$/, TSEP = /^\s*\|?\s*:?-+:?\s*(?:\|\s*:?-+:?\s*)*\|?\s*$/;
+    var merged = [], q;
+    for (q = 0; q < lines.length; q++) {
+      if (TROW.test(lines[q]) && q + 1 < lines.length && TSEP.test(lines[q + 1]) && lines[q + 1].indexOf('-') > -1) {
+        var head = cells(lines[q]), al = cells(lines[q + 1]).map(function (c) { return /^:-+:$/.test(c) ? 'center' : /-:$/.test(c) ? 'right' : ''; }), rows = [];
+        q += 2;
+        while (q < lines.length && TROW.test(lines[q])) { rows.push(cells(lines[q])); q++; }
+        q--;
+        var th = '<div class="tw"><table><thead><tr>' + head.map(function (c, j) { return '<th' + (al[j] ? ' style="text-align:' + al[j] + '"' : '') + '>' + res(inline(c)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+          rows.map(function (r) { return '<tr>' + head.map(function (_, j) { return '<td' + (al[j] ? ' style="text-align:' + al[j] + '"' : '') + '>' + res(inline(r[j] || '')) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>';
+        store.push(th); merged.push('\u0001T' + (store.length - 1) + '\u0002');
+      } else merged.push(lines[q]);
+    }
+    lines = merged;
     lines.forEach(function (l) {
       if (!l.trim()) { flushP(); closeL(); return; }
+      if ((m = l.match(/^\u0001T(\d+)\u0002$/))) { flushP(); closeL(); out.push(store[+m[1]]); return; }
       if ((m = l.match(/^\s*#{1,4}\s+(.*)/))) { flushP(); closeL(); out.push('<p class="h">' + inline(m[1]) + '</p>'); return; }
       if ((m = l.match(/^\s*[-*•]\s+(.*)/))) { flushP(); if (list !== 'ul') { closeL(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + inline(m[1]) + '</li>'); return; }
       if ((m = l.match(/^\s*\d+[.)]\s+(.*)/))) { flushP(); if (list !== 'ol') { closeL(); out.push('<ol>'); list = 'ol'; } out.push('<li>' + inline(m[1]) + '</li>'); return; }
@@ -1217,13 +1238,22 @@
     if (lastRes) return lastRes;
     throw lastErr;
   }
+  function liveInfo() {
+    var today = ''; try { today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { today = new Date().toDateString(); }
+    return '\n\nTODAY IS ' + today + ' (date on the student\'s phone). You have Google Search: for anything current or recent (exam dates, results, cut-offs, syllabus changes, news, latest-year papers) search first and trust the search results and today\'s date over your training memory. Never say a date is in the future or that you have no real-time data when it is on or before today; if search finds nothing, say so honestly. Never invent past-paper questions or claim a question came in a particular exam unless you found it by search or are certain. For comparisons or match-the-column use a Markdown table (header row, then a |---|---| row).';
+  }
   async function callModel(model, sys, msgs, onText) {
-    var body = JSON.stringify({
-      systemInstruction: { parts: [{ text: sys }] },
-      contents: msgs.map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }; }),
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1400 }
-    });
-    var res = await postAuth(model, body);
+    function mk(search) {
+      var o = {
+        systemInstruction: { parts: [{ text: sys + liveInfo() }] },
+        contents: msgs.map(function (m) { return { role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }; }),
+        generationConfig: { temperature: 0.4, maxOutputTokens: 2048 }
+      };
+      if (search) o.tools = [{ google_search: {} }];
+      return JSON.stringify(o);
+    }
+    var res = await postAuth(model, mk(true));
+    if (!res.ok && (res.status === 400 || res.status === 403 || res.status === 429)) { try { var res2 = await postAuth(model, mk(false)); if (res2.ok) res = res2; } catch (e) {} }
     if (!res.ok) { var msg = ''; try { var j = await res.json(); msg = j.error && j.error.message || ''; } catch (e) {} throw new GErr(res.status, msg); }
     var full = '';
     if (!res.body || !res.body.getReader) { var jj = await res.text(); try { JSON.parse(jj).forEach(function (x) { full += gemParts(x); }); } catch (e) {} if (full) onText(full); }
